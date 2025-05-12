@@ -42,8 +42,8 @@ export function LoginForm() {
     console.log(data)
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
-    setIsLoading(false)
-    router.push("/dashboard")
+    // setIsLoading(false)
+    // router.push("/dashboard")
   }
 
   return (
@@ -155,16 +155,16 @@ export function LoginForm() {
           </form>
         </Form>
 
-        <div className="relative">
+        {/* <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-white/10" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-[#1a1a1a]/80 backdrop-blur-sm px-2 text-gray-400">Or continue with</span>
           </div>
-        </div>
+        </div> */}
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* <div className="grid grid-cols-2 gap-4">
           <Button
             variant="outline"
             type="button"
@@ -179,7 +179,7 @@ export function LoginForm() {
           >
             GitHub
           </Button>
-        </div>
+        </div> */}
 
         <p className="text-center text-sm text-gray-400">
           Don&apos;t have an account?{" "}
