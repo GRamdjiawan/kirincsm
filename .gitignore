@@ -21,3 +21,6 @@
 # TypeScript
 /frontend/*.tsbuildinfo
 /frontend/next-env.d.ts
+
+
+/backend/__pycache__/
