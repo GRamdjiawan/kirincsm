@@ -1,20 +1,52 @@
 from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
 import models
 import schemas
+import bcrypt
+
+
+#password hashing
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 # USERS
 def create_user(db: Session, user: schemas.UserCreate):
+    # Check of het e-mailadres al bestaat
+    existing_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error="Email already registered"
+        )
+
+    # Als het e-mailadres nog niet bestaat, maak een nieuwe gebruiker aan
     db_user = models.User(**user.dict())
+    db_user.password = hash_password(user.password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
+
 
 def get_users(db: Session):
     return db.query(models.User).all()
 
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
+
+def authenticate_user(db: Session, email: str, password: str):
+    user = db.query(models.User).filter(models.User.email == email).first()
+
+    if user and password:
+        if verify_password(password, user.password):
+            return user
+        else:
+            return {"error": "Invalid password"}
+    else:
+        return {"error": "User not found"} 
 
 
 # DOMAINS

@@ -16,6 +16,19 @@ class UserRead(UserBase):
     class Config:
         orm_mode = True
 
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "string",
+                "password": "string"
+            }
+        }
+
+
 
 # DOMAIN SCHEMAS
 class DomainBase(BaseModel):

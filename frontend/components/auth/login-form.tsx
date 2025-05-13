@@ -16,7 +16,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(8, { message: "Password must be at least 8 characters" }),
-  rememberMe: z.boolean().default(false),
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>
@@ -31,21 +30,33 @@ export function LoginForm() {
     defaultValues: {
       email: "",
       password: "",
-      rememberMe: false,
     },
   })
 
   async function onSubmit(data: LoginFormValues) {
-    setIsLoading(true)
+  setIsLoading(true)
 
-    // Simulate API call
-    console.log(data)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+  const res = await fetch("http://localhost:8000/api/auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include", 
+    body: JSON.stringify({
+      email: data.email,
+      password: data.password,
+    }),
+  });
 
-    // setIsLoading(false)
-    // router.push("/dashboard")
+  setIsLoading(false);
+
+  if (res.ok) {
+    const result = await res.json();
+    console.log("Logged in as", result.user);
+    router.push("/dashboard");
+  } else {
+    const err = await res.json();
+    console.error("Login failed:", err.detail);
   }
-
+}
   return (
     <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
       <div className="flex flex-col space-y-6">
@@ -115,29 +126,6 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <div className="flex items-center justify-between">
-              <FormField
-                control={form.control}
-                name="rememberMe"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-neon-blue data-[state=checked]:to-neon-purple data-[state=checked]:border-transparent"
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-gray-300">Remember me</FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
-              <Link href="/forgot-password" className="text-sm text-neon-blue hover:text-neon-purple transition-colors">
-                Forgot password?
-              </Link>
-            </div>
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-blue/90 hover:to-neon-purple/90 text-white border-0 mt-2"
@@ -154,32 +142,6 @@ export function LoginForm() {
             </Button>
           </form>
         </Form>
-
-        {/* <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-white/10" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[#1a1a1a]/80 backdrop-blur-sm px-2 text-gray-400">Or continue with</span>
-          </div>
-        </div> */}
-
-        {/* <div className="grid grid-cols-2 gap-4">
-          <Button
-            variant="outline"
-            type="button"
-            className="w-full border-white/10 text-white hover:bg-white/5 hover:text-neon-blue"
-          >
-            Google
-          </Button>
-          <Button
-            variant="outline"
-            type="button"
-            className="w-full border-white/10 text-white hover:bg-white/5 hover:text-neon-purple"
-          >
-            GitHub
-          </Button>
-        </div> */}
 
         <p className="text-center text-sm text-gray-400">
           Don&apos;t have an account?{" "}

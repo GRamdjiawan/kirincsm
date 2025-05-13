@@ -1,14 +1,30 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Response, Request
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import models
 import database
 import schemas
 import crud
+from auth import create_access_token, decode_access_token
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
 # Create tables in the database
 models.Base.metadata.create_all(bind=database.engine)
+
+origins = [
+    "http://localhost:3000",  # Replace with the URL of your Next.js frontend
+    "https://your-frontend-url.com",  # For production environment
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  
+    allow_credentials=True,
+    allow_methods=["*"],  
+    allow_headers=["*"],  
+    )
 
 # Dependency to get the database session
 def get_db():
@@ -19,17 +35,65 @@ def get_db():
         db.close()
 
 # -- USERS --
-@app.post("/api/users/", response_model=schemas.UserRead)
+@app.get("/api/me", response_model=schemas.UserRead)
+def get_logged_in_user(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    user_id = payload.get("user_id")
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@app.post("/api/register/", response_model=schemas.UserRead)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """
     Body: 
-    {
-        "username": "string",
+    {   "full name": "string"
         "email": "string",
         "password": "string"
     }
     """
-    return crud.create_user(db, user)
+    
+    new_user = crud.create_user(db, user)
+    if not new_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    token = create_access_token({"user_id": new_user.id})
+    res = JSONResponse(content={"message": "Logged in", "user": new_user.email})
+    res.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=False,  # Set True in production (HTTPS)
+        samesite="Lax"
+    )
+    return res
+
+
+@app.post("/api/auth", response_model=schemas.UserRead)
+def authenticate_user(user: schemas.UserLogin, response: Response, db: Session = Depends(get_db)):      
+    db_user = crud.authenticate_user(db, user.email, user.password)
+    if not db_user:
+        raise HTTPException(status_code=400, detail="User not found")
+    
+
+    token = create_access_token({"user_id": db_user.id})
+    res = JSONResponse(content={"message": "Logged in", "user": db_user.email})
+    res.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=False,  # Set True in production (HTTPS)
+        samesite="Lax"
+    )
+    return res
 
 # -- PAGES --
 @app.post("/api/pages/", response_model=schemas.PageRead)

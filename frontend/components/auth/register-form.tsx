@@ -50,12 +50,26 @@ export function RegisterForm() {
   async function onSubmit(data: RegisterFormValues) {
     setIsLoading(true)
 
-    // Simulate API call
-    console.log(data)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    setIsLoading(false)
-    router.push("/login")
+    const res = await fetch("http://localhost:8000/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include", 
+      body: JSON.stringify({
+        email: data.email,
+        password: data.password,
+      }),
+    });
+  
+    setIsLoading(false);
+  
+    if (res.ok) {
+      const result = await res.json();
+      console.log("Logged in as", result.user);
+      router.push("/dashboard");
+    } else {
+      const err = await res.json();
+      console.error("Login failed:", err.detail);
+    }
   }
 
   return (
