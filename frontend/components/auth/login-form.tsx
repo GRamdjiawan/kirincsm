@@ -46,11 +46,11 @@ export function LoginForm() {
     }),
   });
 
-  setIsLoading(false);
-
+  
   if (res.ok) {
     const result = await res.json();
     console.log("Logged in as", result.user);
+    setIsLoading(false);
     router.push("/dashboard");
   } else {
     const err = await res.json();

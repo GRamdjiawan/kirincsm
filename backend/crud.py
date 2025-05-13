@@ -19,7 +19,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            error="Email already registered"
+            detail="Email already registered"
         )
 
     # Als het e-mailadres nog niet bestaat, maak een nieuwe gebruiker aan

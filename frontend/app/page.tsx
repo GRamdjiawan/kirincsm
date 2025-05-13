@@ -1,6 +1,42 @@
+'use client'
+
 import { AuthBanner } from "@/components/auth/auth-banner"
+import { useAuth } from "@/context/AuthContext"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { LoadingScreen } from "@/components/ui/LoadingScreen"
 
 export default function Home() {
+  const router = useRouter()
+  const { user, loading } = useAuth()
+  const [showTransition, setShowTransition] = useState(false)
+
+  useEffect(() => {
+    if (!loading && user) {
+      setShowTransition(true)
+    }
+  }, [user, loading])
+
+  const handleTransitionComplete = () => {
+    router.push("/dashboard")
+  }
+
+  // Show loading screen while waiting for auth
+  if (loading) {
+    return <LoadingScreen message="Checking authentication..." />
+  }
+
+  // Show transition animation if user is authenticated
+  if (showTransition) {
+    return (
+      <LoadingScreen
+        message="Redirecting to dashboard..."
+        timeout={1000}
+        onComplete={handleTransitionComplete}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0e0e0e] to-[#1a1a1a] flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-4xl mx-auto space-y-12">
@@ -25,8 +61,6 @@ export default function Home() {
 
         {/* Auth banner */}
         <AuthBanner />
-
-        {/* Features section could go here */}
       </div>
     </div>
   )

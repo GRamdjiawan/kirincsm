@@ -50,18 +50,19 @@ export function RegisterForm() {
   async function onSubmit(data: RegisterFormValues) {
     setIsLoading(true)
 
-    const res = await fetch("http://localhost:8000/api/auth", {
+    const res = await fetch("http://localhost:8000/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include", 
       body: JSON.stringify({
+        name: data.name,
         email: data.email,
         password: data.password,
+        role: "client"
       }),
     });
   
-    setIsLoading(false);
-  
+    
     if (res.ok) {
       const result = await res.json();
       console.log("Logged in as", result.user);
@@ -232,31 +233,6 @@ export function RegisterForm() {
           </form>
         </Form>
 
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-white/10" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[#1a1a1a]/80 backdrop-blur-sm px-2 text-gray-400">Or continue with</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Button
-            variant="outline"
-            type="button"
-            className="w-full border-white/10 text-white hover:bg-white/5 hover:text-neon-blue"
-          >
-            Google
-          </Button>
-          <Button
-            variant="outline"
-            type="button"
-            className="w-full border-white/10 text-white hover:bg-white/5 hover:text-neon-purple"
-          >
-            GitHub
-          </Button>
-        </div>
 
         <p className="text-center text-sm text-gray-400">
           Already have an account?{" "}

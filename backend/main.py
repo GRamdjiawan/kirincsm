@@ -13,14 +13,14 @@ app = FastAPI()
 # Create tables in the database
 models.Base.metadata.create_all(bind=database.engine)
 
-origins = [
-    "http://localhost:3000",  # Replace with the URL of your Next.js frontend
-    "https://your-frontend-url.com",  # For production environment
-]
+# origins = [
+#     "http://localhost:3000",  # Replace with the URL of your Next.js frontend
+#     "https://your-frontend-url.com",  # For production environment
+# ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],  
     allow_headers=["*"],  
