@@ -5,7 +5,7 @@ import models
 import database
 import schemas
 import crud
-from auth import create_access_token, decode_access_token
+from auth import create_access_token, decode_access_token, delete_access_token
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -20,11 +20,11 @@ models.Base.metadata.create_all(bind=database.engine)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["http://localhost:3000"],  # EXACT origin of your frontend
     allow_credentials=True,
-    allow_methods=["*"],  
-    allow_headers=["*"],  
-    )
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Dependency to get the database session
 def get_db():
@@ -50,6 +50,19 @@ def get_logged_in_user(request: Request, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+@app.post("/api/logout")
+def logout(request: Request, response: Response):
+    """
+    Logout the user by deleting the access token cookie and blacklisting the token.
+    """
+    token = request.cookies.get("access_token")  # Corrected line
+    if token:
+        delete_access_token(token)
+    
+    response = JSONResponse(content={"message": "Logged out"})
+    response.delete_cookie(key="access_token")
+    return response
 
 
 @app.post("/api/register/", response_model=schemas.UserRead)

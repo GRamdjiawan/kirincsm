@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { z } from "zod"
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useAuth } from "@/context/AuthContext" // Import the AuthContext
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -22,6 +23,7 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export function LoginForm() {
   const router = useRouter()
+  const { setUser } = useAuth()  // Use the setUser function from context
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
@@ -34,29 +36,31 @@ export function LoginForm() {
   })
 
   async function onSubmit(data: LoginFormValues) {
-  setIsLoading(true)
+    setIsLoading(true)
 
-  const res = await fetch("http://localhost:8000/api/auth", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include", 
-    body: JSON.stringify({
-      email: data.email,
-      password: data.password,
-    }),
-  });
+    const res = await fetch("http://localhost:8000/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include", 
+      body: JSON.stringify({
+        email: data.email,
+        password: data.password,
+      }),
+    });
 
-  
-  if (res.ok) {
-    const result = await res.json();
-    console.log("Logged in as", result.user);
-    setIsLoading(false);
-    router.push("/dashboard");
-  } else {
-    const err = await res.json();
-    console.error("Login failed:", err.detail);
+    if (res.ok) {
+      const result = await res.json()
+      console.log("Logged in as", result.user)
+      setUser(result.user) // Set the user in context
+      setIsLoading(false)
+      router.push("/") // Redirect to the home page (or any other page)
+    } else {
+      const err = await res.json()
+      console.error("Login failed:", err.detail)
+      setIsLoading(false)
+    }
   }
-}
+
   return (
     <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
       <div className="flex flex-col space-y-6">

@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
+import { LoadingScreen } from "@/components/ui/LoadingScreen"
+import { useAuth } from "@/context/AuthContext"
 
 const registerSchema = z
   .object({
@@ -35,6 +37,7 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showTransition, setShowTransition] = useState(false)
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -63,15 +66,33 @@ export function RegisterForm() {
     });
   
     
-    if (res.ok) {
-      const result = await res.json();
-      console.log("Logged in as", result.user);
-      router.push("/dashboard");
-    } else {
-      const err = await res.json();
-      console.error("Login failed:", err.detail);
-    }
-  }
+       if (res.ok) {
+         const result = await res.json()
+         console.log("Logged in as", result.user)
+         setIsLoading(false)
+         setShowTransition(true) // Trigger loading screen
+       } else {
+         const err = await res.json()
+         console.error("Login failed:", err.detail)
+         setIsLoading(false)
+       }
+     }
+   
+     const handleTransitionComplete = () => {
+       router.push("/dashboard")
+     }
+   
+     // If transitioning, show the custom loading screen
+     if (showTransition) {
+       return (
+         <LoadingScreen
+           message="Redirecting to dashboard..."
+           timeout={1000}
+           onComplete={handleTransitionComplete}
+         />
+       )
+     }
+
 
   return (
     <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">

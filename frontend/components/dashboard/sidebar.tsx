@@ -96,9 +96,9 @@ export function Sidebar() {
                 <p className="text-sm font-medium text-white">Admin User</p>
                 <p className="text-xs text-gray-400">admin@example.com</p>
               </div>
-              <Button variant="ghost" size="icon" className="ml-auto">
+              {/* <Button variant="ghost" size="icon" className="ml-auto">
                 <ChevronDown className="h-4 w-4" />
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { Button } from "@/components/ui/button"
 import {
@@ -9,11 +9,57 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Bell, Menu, Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
+import { Menu } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
+import { useState, useEffect } from "react"
+import { LoadingScreen } from "@/components/ui/LoadingScreen"
+import { useRouter } from "next/navigation"
 
 export function Header() {
-  const { setTheme } = useTheme()
+  const { user, setUser, loading } = useAuth() // Assuming isLoading is part of the context
+  const [showTransition, setShowTransition] = useState(false)
+  const router = useRouter()
+
+  const handleTransitionComplete = () => {
+    setUser(null) // Clear the user state
+    router.push("/login") // Redirect to the login page after logging out
+  }
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/logout", {
+        method: "POST",
+        credentials: "include",
+      })
+      if (!response.ok) {
+        console.error("Failed to log out")
+      } else {
+        setShowTransition(true)
+      }
+    } catch (error) {
+      console.error("An error occurred during logout:", error)
+    }
+  }
+
+  // Show a loading screen until the user is loaded
+  if (loading) {
+    return <LoadingScreen message="Loading dashboard..." />
+  }
+
+  if (showTransition) {
+    return (
+      <LoadingScreen
+        message="Logging out..."
+        timeout={1000}
+        onComplete={handleTransitionComplete}
+      />
+    )
+  }
+
+  // Safe destructure with defaults
+  const name = user?.name ?? ""
+  const initials =
+    name.split(" ").map((n) => n[0]).join("").toUpperCase() || "JD"
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-white/10 bg-gradient-to-r from-black/60 to-dark-100/60 backdrop-blur-xl px-4 md:px-6">
@@ -23,31 +69,11 @@ export function Header() {
       </Button>
 
       <div className="ml-auto flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <Bell className="h-5 w-5" />
-          <span className="sr-only">Notifications</span>
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="backdrop-blur-md bg-black/80 border-white/10">
-            <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
               <div className="w-8 h-8 rounded-full bg-gradient-to-r from-neon-blue to-neon-purple flex items-center justify-center text-white font-semibold">
-                A
+                {initials}
               </div>
               <span className="sr-only">User menu</span>
             </Button>
@@ -58,7 +84,7 @@ export function Header() {
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Log out</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
