@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { LoadingAnimation } from "@/components/ui/loading-animation"
+import { LoadingAnimation } from "./loading-animation"
 import { motion } from "framer-motion"
 
 interface LoadingScreenProps {

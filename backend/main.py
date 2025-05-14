@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import FastAPI, Depends, HTTPException, Response, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -142,6 +143,16 @@ def get_domains_by_user_id(user_id: int, db: Session = Depends(get_db)):
     if not domains:
         raise HTTPException(status_code=404, detail="No domains found for this user.")
     return domains
+
+
+@app.get("/api/domains", response_model=List[schemas.DomainRead])
+def get_all_domains(db: Session = Depends(get_db)):
+    domains = crud.get_domains(db)
+    if not domains:
+        raise HTTPException(status_code=404, detail="No domains found.")
+    return domains
+
+
 
 # -- SEO --
 @app.post("/api/seo/", response_model=schemas.SEORead)

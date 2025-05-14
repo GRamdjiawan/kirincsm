@@ -1,54 +1,61 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { FileText } from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
 
-const recentPages = [
+const recentActivity = [
   {
-    id: 1,
+    id: "1",
     title: "Homepage",
-    updatedAt: "2 hours ago",
+    action: "updated",
     user: {
-      name: "Admin",
-      avatar: "",
+      name: "Admin User",
+      avatar: "/placeholder.svg",
     },
+    timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
   },
   {
-    id: 2,
+    id: "2",
     title: "About Us",
-    updatedAt: "Yesterday",
+    action: "published",
     user: {
-      name: "Admin",
-      avatar: "",
+      name: "Admin User",
+      avatar: "/placeholder.svg",
     },
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
   },
   {
-    id: 3,
+    id: "3",
     title: "Services",
-    updatedAt: "3 days ago",
+    action: "created",
     user: {
-      name: "Admin",
-      avatar: "",
+      name: "Admin User",
+      avatar: "/placeholder.svg",
     },
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
   },
 ]
 
 export function RecentPages() {
   return (
     <div className="space-y-4">
-      {recentPages.map((page) => (
-        <div key={page.id} className="flex items-center">
-          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center mr-3">
-            <FileText className="h-4 w-4 text-neon-blue" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{page.title}</p>
-            <p className="text-xs text-muted-foreground">Updated {page.updatedAt}</p>
-          </div>
+      {recentActivity.map((activity) => (
+        <div key={activity.id} className="flex items-start gap-3">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={page.user.avatar || "/placeholder.svg"} alt={page.user.name} />
+            <AvatarImage src={activity.user.avatar || "/placeholder.svg"} alt={activity.user.name} />
             <AvatarFallback className="bg-gradient-to-r from-neon-blue to-neon-purple text-white text-xs">
-              {page.user.name.charAt(0)}
+              {activity.user.name.charAt(0)}
             </AvatarFallback>
           </Avatar>
+          <div className="flex-1 space-y-1">
+            <p className="text-sm">
+              <span className="font-medium">{activity.user.name}</span>{" "}
+              <span className="text-muted-foreground">
+                {activity.action} <span className="font-medium text-white">{activity.title}</span>
+              </span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
+            </p>
+          </div>
         </div>
       ))}
     </div>

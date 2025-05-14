@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -9,19 +9,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu } from "lucide-react"
+import { Bell, Menu } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { LoadingScreen } from "@/components/ui/LoadingScreen"
-import { useRouter } from "next/navigation"
 
 export function Header() {
-  const { user, setUser, loading } = useAuth() // Assuming isLoading is part of the context
+  const { user, setUser, loading } = useAuth()
   const [showTransition, setShowTransition] = useState(false)
-  const router = useRouter()
 
   const handleTransitionComplete = () => {
-    setUser(null) // Clear the user state
+    setUser(null)
   }
 
   const handleLogout = async () => {
@@ -40,7 +38,6 @@ export function Header() {
     }
   }
 
-  // Show a loading screen until the user is loaded
   if (loading) {
     return <LoadingScreen message="Loading dashboard..." />
   }
@@ -55,19 +52,25 @@ export function Header() {
     )
   }
 
-  // Safe destructure with defaults
   const name = user?.name ?? ""
   const initials =
     name.split(" ").map((n) => n[0]).join("").toUpperCase() || "JD"
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-white/10 bg-gradient-to-r from-black/60 to-dark-100/60 backdrop-blur-xl px-4 md:px-6">
-      <Button variant="ghost" size="icon" className="md:hidden">
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-white/10 bg-gradient-to-r from-black/60 to-dark-100/60 backdrop-blur-xl px-4 md:px-6">
+      {/* Mobile menu button */}
+      {/* <Button variant="ghost" size="icon" className="md:hidden">
         <Menu className="h-5 w-5" />
         <span className="sr-only">Toggle Menu</span>
-      </Button>
+      </Button> */}
 
-      <div className="ml-auto flex items-center gap-2">
+      {/* Right side actions */}
+      <div className="flex items-center space-x-2 ml-auto">
+        {/* <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          <span className="absolute top-1 right-1 w-2 h-2 bg-neon-purple rounded-full" />
+        </Button> */}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
