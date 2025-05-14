@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { LoadingScreen } from "@/components/ui/LoadingScreen"
-import { useAuth } from "@/context/AuthContext"
+import { useAuth } from "@/context/AuthContext" // Import the AuthContext
 
 const registerSchema = z
   .object({
@@ -38,6 +38,7 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
+  const { loading, setUser } = useAuth()
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -52,46 +53,67 @@ export function RegisterForm() {
 
   async function onSubmit(data: RegisterFormValues) {
     setIsLoading(true)
-
-    const res = await fetch("http://localhost:8000/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include", 
-      body: JSON.stringify({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        role: "client"
-      }),
-    });
   
-    
-       if (res.ok) {
-         const result = await res.json()
-         console.log("Logged in as", result.user)
-         setIsLoading(false)
-         setShowTransition(true) // Trigger loading screen
-       } else {
-         const err = await res.json()
-         console.error("Login failed:", err.detail)
-         setIsLoading(false)
-       }
-     }
-   
-     const handleTransitionComplete = () => {
-       router.push("/dashboard")
-     }
-   
-     // If transitioning, show the custom loading screen
-     if (showTransition) {
-       return (
-         <LoadingScreen
-           message="Redirecting to dashboard..."
-           timeout={1000}
-           onComplete={handleTransitionComplete}
-         />
-       )
-     }
+    try {
+      const res = await fetch("http://localhost:8000/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          role: "client",
+        }),
+      });
+  
+      if (res.ok) {
+        // ✅ Automatically log in user by fetching user details
+        const meRes = await fetch("http://localhost:8000/api/me", {
+          method: "GET",
+          credentials: "include",
+        })
+  
+        if (meRes.ok) {
+          const user = await meRes.json()
+          setUser(user) // Set user in auth context
+          setIsLoading(false)
+          setShowTransition(true)
+        } else {
+          console.error("Failed to fetch user after registration.")
+          setIsLoading(false)
+        }
+      } else {
+        const err = await res.json()
+        console.error("Registration failed:", err.detail)
+        setIsLoading(false)
+      }
+    } catch (error) {
+      console.error("Registration error:", error)
+      setIsLoading(false)
+    }
+  }
+
+  const handleTransitionComplete = () => {
+    router.push("/dashboard")
+  }
+
+  // Show loading screen while waiting for auth
+  if (loading) {
+    return <LoadingScreen message="Checking authentication..." />
+  }
+
+  // Show transition animation if user is authenticated
+  if (showTransition) {
+    return (
+      <LoadingScreen
+        message="Redirecting to dashboard..."
+        timeout={1000}
+        onComplete={handleTransitionComplete}
+      />
+    )
+  }
+  
 
 
   return (

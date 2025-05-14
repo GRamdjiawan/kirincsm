@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 
 type User = {
   id: number
@@ -18,43 +18,48 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  setUser: () => {} // Added default no-op function
+  setUser: () => {
+    console.warn('setUser called outside AuthProvider')
+  },
 })
 
 export const useAuth = () => useContext(AuthContext)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUserState] = useState<User | null>(null)
+export function AuthProvider({ children }: React.PropsWithChildren) {
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const setUser = (user: User | null) => {
-    setUserState(user)
-  }
-
   useEffect(() => {
-    async function fetchUser() {
+    if (user !== null) {
+      setLoading(false)
+      return
+    }
+  
+    const fetchUser = async () => {
       try {
         const res = await fetch('http://localhost:8000/api/me', {
           method: 'GET',
           credentials: 'include',
         })
-
+  
         if (res.ok) {
           const data = await res.json()
-          setUserState(data)
+          setUser(data)
         } else {
-          setUserState(null)
+          setUser(null)
         }
       } catch (error) {
-        setUserState(null)
+        console.error('Error fetching user:', error)
+        setUser(null)
       } finally {
         setLoading(false)
       }
     }
-
+  
     fetchUser()
-  }, [])
-
+  }, [user])
+  
+  
   return (
     <AuthContext.Provider value={{ user, loading, setUser }}>
       {children}

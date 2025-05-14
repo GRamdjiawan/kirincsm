@@ -2,40 +2,58 @@
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, FileText, ImageIcon, Search, Settings, ChevronDown, ChevronRight } from "lucide-react"
+import { LayoutDashboard, FileText, ImageIcon, Search, Settings, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+import { useAuth } from "@/context/AuthContext"
+import { useEffect, useState } from "react"
+
 const sidebarItems = [
-  {
-    title: "Dashboard",
-    icon: LayoutDashboard,
-    href: "/dashboard",
-  },
-  {
-    title: "Pages",
-    icon: FileText,
-    href: "/dashboard/pages",
-  },
-  {
-    title: "Media",
-    icon: ImageIcon,
-    href: "/dashboard/media",
-  },
-  {
-    title: "SEO",
-    icon: Search,
-    href: "/dashboard/seo",
-  },
-  {
-    title: "Settings",
-    icon: Settings,
-    href: "/dashboard/settings",
-  },
+  { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { title: "Pages", icon: FileText, href: "/dashboard/pages" },
+  { title: "Media", icon: ImageIcon, href: "/dashboard/media" },
+  { title: "SEO", icon: Search, href: "/dashboard/seo" },
+  { title: "Settings", icon: Settings, href: "/dashboard/settings" },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { user } = useAuth()
+
+  const [formattedUserName, setFormattedUserName] = useState("John Doe")
+  const [domain, setDomain] = useState("example.com")
+
+  useEffect(() => {
+    const userName = user?.name || "John Doe"
+    const capitalizeName = (name: string) => {
+      const tussenvoegsels = ["van", "der", "de"]
+      return name
+        .split(" ")
+        .map((word) =>
+          tussenvoegsels.includes(word.toLowerCase())
+            ? word.toLowerCase()
+            : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        )
+        .join(" ")
+    }
+
+    setFormattedUserName(capitalizeName(userName))
+
+    if (user?.id) {
+      console.log(user.id);
+      
+      fetch(`http://localhost:8000/api/domains/${user.id}`)
+        .then((response) => response.json())
+        .then((data) => {
+          setDomain(data.name || "example.com")
+        })
+        .catch((error) => {
+          console.error("Error fetching domain:", error)
+          setDomain("Error")
+        })
+    }
+  }, [user])
 
   return (
     <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-10">
@@ -64,7 +82,6 @@ export function Sidebar() {
           <nav className="flex-1 px-4 space-y-2">
             {sidebarItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-
               return (
                 <Link
                   key={item.href}
@@ -89,16 +106,13 @@ export function Sidebar() {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-neon-blue to-neon-purple flex items-center justify-center text-white font-semibold">
-                  A
+                  {formattedUserName.charAt(0)}
                 </div>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-white">Admin User</p>
-                <p className="text-xs text-gray-400">admin@example.com</p>
+                <p className="text-sm font-medium text-white">{formattedUserName}</p>
+                <p className="text-xs text-gray-400">{domain}</p>
               </div>
-              {/* <Button variant="ghost" size="icon" className="ml-auto">
-                <ChevronDown className="h-4 w-4" />
-              </Button> */}
             </div>
           </div>
         </div>

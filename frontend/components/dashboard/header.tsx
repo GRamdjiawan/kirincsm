@@ -22,7 +22,6 @@ export function Header() {
 
   const handleTransitionComplete = () => {
     setUser(null) // Clear the user state
-    router.push("/login") // Redirect to the login page after logging out
   }
 
   const handleLogout = async () => {

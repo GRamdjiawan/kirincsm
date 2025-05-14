@@ -11,7 +11,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
+import { LoadingScreen } from "@/components/ui/LoadingScreen"
 import { useAuth } from "@/context/AuthContext" // Import the AuthContext
 
 const loginSchema = z.object({
@@ -23,9 +23,10 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export function LoginForm() {
   const router = useRouter()
-  const { setUser } = useAuth()  // Use the setUser function from context
+  const { loading, setUser } = useAuth()  // Use the setUser function from context
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [showTransition, setShowTransition] = useState(false)
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -37,29 +38,61 @@ export function LoginForm() {
 
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true)
-
-    const res = await fetch("http://localhost:8000/api/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include", 
-      body: JSON.stringify({
-        email: data.email,
-        password: data.password,
-      }),
-    });
-
-    if (res.ok) {
-      const result = await res.json()
-      console.log("Logged in as", result.user)
-      setUser(result.user) // Set the user in context
-      setIsLoading(false)
-      router.push("/") // Redirect to the home page (or any other page)
-    } else {
-      const err = await res.json()
-      console.error("Login failed:", err.detail)
-      setIsLoading(false)
+    try {
+      const loginRes = await fetch("http://localhost:8000/api/auth", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          "email": data.email,
+          "password": data.password
+        })
+      })
+  
+      if (loginRes.ok) {
+        // ✅ Fetch user after login
+        const meRes = await fetch("http://localhost:8000/api/me", {
+          method: "GET",
+          credentials: "include"
+        })
+  
+        if (meRes.ok) {
+          const user = await meRes.json()
+          setUser(user) 
+          setShowTransition(true) 
+        } else {
+          console.error("Failed to fetch user after login.")
+        }
+      } else {
+        console.error("Login failed")
+      }
+    } catch (err) {
+      console.error("Login error:", err)
     }
   }
+
+
+    const handleTransitionComplete = () => {
+      router.push("/dashboard")
+    }
+  
+    // Show loading screen while waiting for auth
+    if (loading) {
+      return <LoadingScreen message="Checking authentication..." />
+    }
+  
+    // Show transition animation if user is authenticated
+    if (showTransition) {
+      return (
+        <LoadingScreen
+          message="Redirecting to dashboard..."
+          timeout={1000}
+          onComplete={handleTransitionComplete}
+        />
+      )
+    }
 
   return (
     <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">

@@ -20,7 +20,7 @@ models.Base.metadata.create_all(bind=database.engine)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # EXACT origin of your frontend
+    allow_origins=["http://localhost:3000"],  # Your frontend origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -135,16 +135,13 @@ def create_section(page_id: int, section: schemas.SectionCreate, db: Session = D
     return crud.create_section(db, section, page_id)
 
 # -- DOMAINS --
-@app.post("/api/domains/", response_model=schemas.DomainRead)
-def create_domain(domain: schemas.DomainCreate, db: Session = Depends(get_db)):
-    """
-    Body:
-    {
-        "domain_name": "string",
-        "description": "string"
-    }
-    """
-    return crud.create_domain(db, domain)
+
+@app.get("/api/domains/{user_id}", response_model=schemas.DomainRead)
+def get_domains_by_user_id(user_id: int, db: Session = Depends(get_db)):
+    domains = crud.get_domains_by_user_id(db, user_id)
+    if not domains:
+        raise HTTPException(status_code=404, detail="No domains found for this user.")
+    return domains
 
 # -- SEO --
 @app.post("/api/seo/", response_model=schemas.SEORead)

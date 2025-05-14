@@ -63,6 +63,10 @@ def get_domains(db: Session):
 def get_domain(db: Session, domain_id: int):
     return db.query(models.Domain).filter(models.Domain.id == domain_id).first()
 
+def get_domains_by_user_id(db: Session, user_id: int):
+    return db.query(models.Domain).filter(models.Domain.user_id == user_id).first()
+
+
 
 # PAGES
 def create_page(db: Session, page: schemas.PageCreate):
