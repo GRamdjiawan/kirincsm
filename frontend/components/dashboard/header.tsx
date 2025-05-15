@@ -13,10 +13,12 @@ import { Bell, Menu } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { useState } from "react"
 import { LoadingScreen } from "@/components/ui/LoadingScreen"
+import { useRouter } from "next/navigation"
 
 export function Header() {
   const { user, setUser, loading } = useAuth()
   const [showTransition, setShowTransition] = useState(false)
+  const router = useRouter()
 
   const handleTransitionComplete = () => {
     setUser(null)
@@ -56,6 +58,10 @@ export function Header() {
   const initials =
     name.split(" ").map((n) => n[0]).join("").toUpperCase() || "JD"
 
+  function openProfile() {
+    router.push("/dashboard/profile")
+  }
+
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-white/10 bg-gradient-to-r from-black/60 to-dark-100/60 backdrop-blur-xl px-4 md:px-6">
       {/* Mobile menu button */}
@@ -83,8 +89,7 @@ export function Header() {
           <DropdownMenuContent align="end" className="backdrop-blur-md bg-black/80 border-white/10">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem onClick={openProfile}>Profile</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
           </DropdownMenuContent>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { use, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,17 +12,71 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Camera, Key, Bell, Shield, Save, User, Globe } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import { useAuth } from "@/context/AuthContext"
+
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
-
-  const handleSave = () => {
+  const { user } = useAuth()
+  const [initials, setInitials] = useState("JD")
+  const [fullname, setFullName] = useState("John Doe")
+  const [email, setEmail] = useState("example@email.com")
+  const [role, setRole] = useState("client")
+  
+  const handleSave = async () => {
     setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
+  
+    try {
+      const response = await fetch("/api/users/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          credentials: "include"
+        },
+        body: JSON.stringify({
+          name: fullname,
+          email: email,
+        }),
+      })
+  
+      if (!response.ok) {
+        throw new Error("Failed to update profile")
+      }
+  
+      const result = await response.json()
+      console.log("Updated user:", result)
+      // Optionally show success toast or update UI state
+    } catch (error) {
+      console.error(error)
+      // Optionally show error toast
+    } finally {
       setIsLoading(false)
-    }, 1500)
+    }
   }
+
+  useEffect(() => {
+    console.log("user", user);
+    const fullName = user?.name || "John Doe"
+    const capitalizeName = (name: string) => {
+      return name
+      .split(" ")
+      .map((word) =>
+        ["van", "van der", "van de"].includes(word.toLowerCase())
+        ? word.toLowerCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      )
+      .join(" ")
+    }
+    
+    const formattedName = capitalizeName(fullName)
+    const email = user?.email || "example@email.com"
+    setInitials(fullName.split(" ").map((n) => n[0]).join("").toUpperCase() || "JD") 
+    setFullName(formattedName)
+    setEmail(email)
+    
+
+
+  }, [user])
 
   return (
     <div className="space-y-6">
@@ -35,26 +89,15 @@ export default function ProfilePage() {
         {/* Profile sidebar */}
         <Card className="backdrop-blur-md bg-white/5 border-white/10 shadow-lg rounded-xl overflow-hidden md:col-span-1">
           <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center">
+            <div className="flex flex-col justify-center items-center text-center">
               <div className="relative mb-4">
-                <Avatar className="w-24 h-24 border-2 border-white/10">
-                  <AvatarImage src="/placeholder.svg" alt="Profile" />
-                  <AvatarFallback className="bg-gradient-to-r from-neon-blue to-neon-purple text-white text-xl">
-                    A
-                  </AvatarFallback>
+                <Avatar className="w-24 h-24 text-2xl border-2 border-white/10 rounded-full bg-gradient-to-r from-neon-blue to-neon-purple flex items-center justify-center text-white font-semibold">
+                {initials}
                 </Avatar>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-neon-blue hover:bg-neon-blue/90"
-                >
-                  <Camera className="h-4 w-4" />
-                  <span className="sr-only">Change avatar</span>
-                </Button>
               </div>
 
-              <h2 className="text-xl font-bold mt-2">Admin User</h2>
-              <p className="text-muted-foreground text-sm">admin@example.com</p>
+              <h2 className="text-xl font-bold mt-2">{}</h2>
+              <p className="text-muted-foreground text-sm">{email}</p>
 
               <div className="flex items-center mt-2 text-xs text-muted-foreground">
                 <Globe className="h-3 w-3 mr-1" />
@@ -69,16 +112,13 @@ export default function ProfilePage() {
                   <div className="flex justify-between items-center">
                     <span className="text-xs">Email Verified</span>
                     <span className="text-xs text-green-400">✓ Verified</span>
-                  </div>
-                  <div className="flex justify-between items-center">
+                  </div> 
+                  {/* future feature */}
+                  {/* <div className="flex justify-between items-center">
                     <span className="text-xs">2FA</span>
                     <span className="text-xs text-amber-400">Not Enabled</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">Last Login</span>
-                    <span className="text-xs">2 hours ago</span>
-                  </div>
-                </div>
+                  </div> */}
+                 </div>
               </div>
             </div>
           </CardContent>
@@ -87,7 +127,7 @@ export default function ProfilePage() {
         {/* Profile tabs */}
         <Card className="backdrop-blur-md bg-white/5 border-white/10 shadow-lg rounded-xl overflow-hidden md:col-span-2">
           <Tabs defaultValue="personal" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-white/5 rounded-t-xl">
+            <TabsList className="grid w-full grid-cols-2 bg-white/5 rounded-t-xl">
               <TabsTrigger value="personal" className="rounded-xl">
                 <User className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Personal</span>
@@ -98,22 +138,22 @@ export default function ProfilePage() {
                 <span className="hidden sm:inline">Security</span>
                 <span className="sm:hidden">Security</span>
               </TabsTrigger>
-              <TabsTrigger value="notifications" className="rounded-xl">
+              {/* <TabsTrigger value="notifications" className="rounded-xl">
                 <Bell className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Notifications</span>
                 <span className="sm:hidden">Alerts</span>
-              </TabsTrigger>
+              </TabsTrigger> */}
             </TabsList>
 
             {/* Personal Info Tab */}
             <TabsContent value="personal" className="p-4 md:p-6 space-y-6">
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
                     <Input
                       id="name"
-                      defaultValue="Admin User"
+                      defaultValue={fullname}
                       className="bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl"
                     />
                   </div>
@@ -121,36 +161,7 @@ export default function ProfilePage() {
                     <Label htmlFor="email">Email Address</Label>
                     <Input
                       id="email"
-                      defaultValue="admin@example.com"
-                      className="bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    placeholder="Tell us about yourself"
-                    className="bg-white/5 border-white/10 focus-visible:ring-neon-blue min-h-[100px] rounded-xl"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <Input
-                      id="role"
-                      defaultValue="Administrator"
-                      disabled
-                      className="bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="timezone">Timezone</Label>
-                    <Input
-                      id="timezone"
-                      defaultValue="UTC+01:00"
+                      defaultValue={email}
                       className="bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl"
                     />
                   </div>

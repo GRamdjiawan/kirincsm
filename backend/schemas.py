@@ -27,6 +27,10 @@ class UserLogin(BaseModel):
                 "password": "string"
             }
         }
+        
+class UserUpdate(BaseModel):
+    name: Optional[str]
+    email: Optional[EmailStr]
 
 
 

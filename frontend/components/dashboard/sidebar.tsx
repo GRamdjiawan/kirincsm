@@ -73,16 +73,6 @@ const sidebarItems = [
     href: "/dashboard/users",
   },
   {
-    title: "Settings",
-    icon: Settings,
-    href: "/dashboard/settings",
-  },
-  {
-    title: "Help & Support",
-    icon: HelpCircle,
-    href: "/dashboard/help",
-  },
-  {
     title: "Profile",
     icon: User,
     href: "/dashboard/profile",

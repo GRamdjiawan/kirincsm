@@ -36,6 +36,22 @@ def get_db():
         db.close()
 
 # -- USERS --
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> models.User:
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    user_id = payload.get("user_id")
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return user
+
 @app.get("/api/me", response_model=schemas.UserRead)
 def get_logged_in_user(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")
@@ -108,6 +124,22 @@ def authenticate_user(user: schemas.UserLogin, response: Response, db: Session =
         samesite="Lax"
     )
     return res
+
+@app.put("/api/users/update")
+def update_user(
+    user_update: schemas.UserUpdate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if user_update.name:
+        current_user.name = user_update.name
+    if user_update.email:
+        current_user.email = user_update.email
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
 
 # -- PAGES --
 @app.post("/api/pages/", response_model=schemas.PageRead)
