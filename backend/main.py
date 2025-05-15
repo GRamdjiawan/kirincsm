@@ -139,6 +139,16 @@ def update_user(
     db.refresh(current_user)
     return current_user
 
+@app.put("/api/users/change-password")
+def change_password_endpoint(
+    password_data: schemas.ChangePassword,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    updated_user = crud.change_password(
+        db, current_user, password_data.old_password, password_data.new_password
+    )
+    return {"message": "Password changed successfully"}
 
 
 # -- PAGES --

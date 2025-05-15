@@ -49,6 +49,17 @@ def authenticate_user(db: Session, email: str, password: str):
             return {"error": "Invalid password"}
     else:
         return {"error": "User not found"} 
+    
+
+def change_password(db: Session, user: models.User, old_password: str, new_password: str):
+    if not verify_password(old_password, user.password):
+        raise HTTPException(status_code=403, detail="Old password is incorrect")
+
+    user.password = hash_password(new_password)
+    db.commit()
+    db.refresh(user)
+    return user
+
 
 
 # DOMAINS

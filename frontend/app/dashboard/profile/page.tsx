@@ -6,8 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
+import { LoadingScreen } from "@/components/ui/LoadingScreen"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Camera, Key, Bell, Shield, Save, User, Globe } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -17,42 +16,18 @@ import { useAuth } from "@/context/AuthContext"
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
-  const { user } = useAuth()
+  const { user, loading, setUser } = useAuth()
   const [initials, setInitials] = useState("JD")
   const [fullname, setFullName] = useState("John Doe")
   const [email, setEmail] = useState("example@email.com")
-  const [role, setRole] = useState("client")
-  
-  const handleSave = async () => {
-    setIsLoading(true)
-  
-    try {
-      const response = await fetch("/api/users/update", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          credentials: "include"
-        },
-        body: JSON.stringify({
-          name: fullname,
-          email: email,
-        }),
-      })
-  
-      if (!response.ok) {
-        throw new Error("Failed to update profile")
-      }
-  
-      const result = await response.json()
-      console.log("Updated user:", result)
-      // Optionally show success toast or update UI state
-    } catch (error) {
-      console.error(error)
-      // Optionally show error toast
-    } finally {
-      setIsLoading(false)
-    }
-  }
+
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [showTransition, setShowTransition] = useState(false)
+  const [passwordError, setPasswordError] = useState("")
+
 
   useEffect(() => {
     console.log("user", user);
@@ -77,6 +52,123 @@ export default function ProfilePage() {
 
 
   }, [user])
+
+  const handleChangePassword = async () => {
+    setPasswordError("") // reset error on new attempt
+  
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError("Please fill in all fields.")
+      return
+    }
+  
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match.")
+      return
+    }
+  
+    setIsChangingPassword(true)
+  
+    try {
+      const response = await fetch("http://localhost:8000/api/users/change-password", {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          old_password: currentPassword,
+          new_password: newPassword,
+        }),
+      })
+  
+      if (!response.ok) {
+        const data = await response.json()
+        console.log("Error response:", data);
+        
+        // const errorMessage = data?.detail || "Password update failed"
+        setPasswordError("errorMessage")
+        return
+      } else{
+
+        alert("Password changed successfully. You will be logged out.")
+        try {
+          const response = await fetch("http://localhost:8000/api/logout", {
+            method: "POST",
+            credentials: "include",
+          })
+    
+          if (!response.ok) {
+            console.error("Failed to log out")
+          } else {
+            setShowTransition(true)
+          }
+        } catch (error) {
+          console.error("An error occurred during logout:", error)
+        }
+      }
+  
+  
+    } catch (err) {
+      console.error(err)
+      setPasswordError("An unexpected error occurred.")
+    } finally {
+      setIsChangingPassword(false)
+    }
+  }
+  
+
+
+    if (loading) {
+      return <LoadingScreen message="Loading dashboard..." />
+    }
+    const handleTransitionComplete = () => {
+      setUser(null)
+    }
+  
+    if (showTransition) {
+      return (
+        <LoadingScreen
+          message="Logging out..."
+          timeout={1000}
+          onComplete={handleTransitionComplete}
+        />
+      )
+    }
+  
+
+  
+  const handleSave = async () => {
+    setIsLoading(true)
+  
+    try {
+      const response = await fetch("http://localhost:8000/api/users/update", {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          
+        },
+        body: JSON.stringify({
+          name: fullname,
+          email: email,
+        }),
+      })
+  
+      if (!response.ok) {
+        throw new Error("Failed to update profile")
+      } else{
+        const result = await response.json()
+        console.log("Updated user:", result)
+        // Optionally show success toast or update UI state
+      }
+    } catch (error) {
+      console.error(error)
+      // Optionally show error toast
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
 
   return (
     <div className="space-y-6">
@@ -152,18 +244,21 @@ export default function ProfilePage() {
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
                     <Input
-                      id="name"
-                      defaultValue={fullname}
-                      className="bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl"
-                    />
+                        id="name"
+                        value={fullname}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl"
+                      />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email Address</Label>
                     <Input
                       id="email"
-                      defaultValue={email}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl"
                     />
+
                   </div>
                 </div>
 
@@ -192,6 +287,8 @@ export default function ProfilePage() {
                   <Input
                     id="current-password"
                     type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
                     className="bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl"
                   />
                 </div>
@@ -202,6 +299,8 @@ export default function ProfilePage() {
                     <Input
                       id="new-password"
                       type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
                       className="bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl"
                     />
                   </div>
@@ -210,18 +309,30 @@ export default function ProfilePage() {
                     <Input
                       id="confirm-password"
                       type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                       className="bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl"
                     />
                   </div>
                 </div>
 
-                <Button variant="outline" className="border-white/10 text-white hover:bg-white/5 rounded-xl">
+                {passwordError && (
+                  <p className="text-sm text-red-500 font-medium">{passwordError}</p>
+                )}
+
+
+                <Button
+                  onClick={handleChangePassword}
+                  disabled={isChangingPassword}
+                  variant="outline"
+                  className="border-white/10 text-white hover:bg-white/5 rounded-xl"
+                >
                   <Key className="mr-2 h-4 w-4" />
-                  Change Password
+                  {isChangingPassword ? "Saving..." : "Change Password"}
                 </Button>
               </div>
 
-              <Separator className="my-6 bg-white/10" />
+              {/* <Separator className="my-6 bg-white/10" />
 
               <CardHeader className="p-0">
                 <CardTitle>Two-Factor Authentication</CardTitle>
@@ -234,47 +345,10 @@ export default function ProfilePage() {
                   <p className="text-sm text-muted-foreground">Protect your account with 2FA.</p>
                 </div>
                 <Switch />
-              </div>
+              </div> */}
             </TabsContent>
 
-            {/* Notifications Tab */}
-            <TabsContent value="notifications" className="p-4 md:p-6 space-y-6">
-              <CardHeader className="p-0">
-                <CardTitle>Notification Preferences</CardTitle>
-                <CardDescription>Choose how you want to be notified</CardDescription>
-              </CardHeader>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Email Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Receive emails about your account activity.</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Marketing Emails</Label>
-                    <p className="text-sm text-muted-foreground">Receive emails about new features and offers.</p>
-                  </div>
-                  <Switch />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Security Alerts</Label>
-                    <p className="text-sm text-muted-foreground">Get notified about suspicious activity.</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-              </div>
-
-              <Button className="bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-blue/90 hover:to-neon-purple/90 text-white rounded-xl">
-                <Save className="mr-2 h-4 w-4" />
-                Save Preferences
-              </Button>
-            </TabsContent>
+            
           </Tabs>
         </Card>
       </div>

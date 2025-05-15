@@ -36,49 +36,6 @@ const defaultAdminSites = [
   { name: "Landing Page", url: "landing.example.com", id: "site4" },
 ]
 
-const sidebarItems = [
-  {
-    title: "Home",
-    icon: LayoutDashboard,
-    href: "/dashboard",
-  },
-  {
-    title: "Pages",
-    icon: FileText,
-    href: "/dashboard/pages",
-  },
-  {
-    title: "Images",
-    icon: ImageIcon,
-    href: "/dashboard/images",
-  },
-  {
-    title: "SEO",
-    icon: Search,
-    href: "/dashboard/seo",
-    subItems: [
-      {
-        title: "SEO Settings",
-        href: "/dashboard/seo",
-      },
-      {
-        title: "SEO Analytics",
-        href: "/dashboard/seo/analytics",
-      },
-    ],
-  },
-  {
-    title: "Users",
-    icon: Users,
-    href: "/dashboard/users",
-  },
-  {
-    title: "Profile",
-    icon: User,
-    href: "/dashboard/profile",
-  },
-]
-
 export function Sidebar() {
   const pathname = usePathname()
   const { user } = useAuth()
@@ -86,8 +43,11 @@ export function Sidebar() {
 
   const [adminSitesData, setAdminSitesData] = useState(defaultAdminSites)
   const [selectedSite, setSelectedSite] = useState(defaultAdminSites[0])
+  const [clientDomain, setClientDomain] = useState()
 
   useEffect(() => {
+    if (!user) return
+
     if (isAdmin) {
       fetch("http://localhost:8000/api/domains", {
         method: "GET",
@@ -104,10 +64,72 @@ export function Sidebar() {
         .catch((error) => {
           console.error("Error fetching domains:", error)
         })
+    } else {
+      fetch(`http://localhost:8000/api/domains/${user?.id}`, {
+        method: "GET",
+        credentials: "include",
+      })
+        .then((response) => {
+          if (!response.ok) throw new Error("Network response was not ok")
+          return response.json()
+        })
+        .then((data) => {
+          setClientDomain(data.name)
+        })
+        .catch((error) => {
+          console.error("Error fetching domains:", error)
+        })
     }
-  }, [isAdmin])
+  }, [isAdmin, user])
 
   if (!user) return null
+
+  const sidebarItems = [
+    {
+      title: "Home",
+      icon: LayoutDashboard,
+      href: "/dashboard",
+    },
+    {
+      title: "Pages",
+      icon: FileText,
+      href: "/dashboard/pages",
+    },
+    {
+      title: "Images",
+      icon: ImageIcon,
+      href: "/dashboard/images",
+    },
+    {
+      title: "SEO",
+      icon: Search,
+      href: "/dashboard/seo",
+      subItems: [
+        {
+          title: "SEO Settings",
+          href: "/dashboard/seo",
+        },
+        {
+          title: "SEO Analytics",
+          href: "/dashboard/seo/analytics",
+        },
+      ],
+    },
+    ...(isAdmin
+      ? [
+          {
+            title: "Users",
+            icon: Users,
+            href: "/dashboard/users",
+          },
+        ]
+      : []),
+    {
+      title: "Profile",
+      icon: User,
+      href: "/dashboard/profile",
+    },
+  ]
 
   return (
     <div className="h-screen flex flex-col bg-black/40 backdrop-blur-xl border-r border-white/10">
@@ -235,11 +257,8 @@ export function Sidebar() {
         <div className="p-4 mt-auto flex items-center">
           <div className="ml-3">
             <p className="text-sm font-medium text-white">{user?.name || "User"}</p>
-            <p className="text-xs text-gray-400">{user?.email || "user@example.com"}</p>
+            <p className="text-xs text-gray-400">{clientDomain || "example.com"}</p>
           </div>
-          <Button variant="ghost" size="icon" className="ml-auto">
-            <ChevronDown className="h-4 w-4" />
-          </Button>
         </div>
       )}
     </div>

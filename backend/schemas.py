@@ -25,12 +25,17 @@ class UserLogin(BaseModel):
             "example": {
                 "email": "string",
                 "password": "string"
+                
             }
         }
         
 class UserUpdate(BaseModel):
     name: Optional[str]
     email: Optional[EmailStr]
+
+class ChangePassword(BaseModel):
+    old_password: str
+    new_password: str
 
 
 
