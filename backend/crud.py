@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
+from sqlalchemy import func
 import models
 import schemas
 import bcrypt
@@ -41,14 +42,12 @@ def get_user(db: Session, user_id: int):
 
 def authenticate_user(db: Session, email: str, password: str):
     user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        return None
+    if not verify_password(password, user.password):
+        return None
+    return user
 
-    if user and password:
-        if verify_password(password, user.password):
-            return user
-        else:
-            return {"error": "Invalid password"}
-    else:
-        return {"error": "User not found"} 
     
 
 def change_password(db: Session, user: models.User, old_password: str, new_password: str):
@@ -101,6 +100,33 @@ def get_pages(db: Session):
 def get_page(db: Session, page_id: int):
     return db.query(models.Page).filter(models.Page.id == page_id).first()
 
+def get_pages_by_user_id(db: Session, user_id: int):
+    domains = db.query(models.Domain).filter(models.Domain.user_id == user_id).all()
+    domain_ids = [domain.id for domain in domains]
+    # Join pages and sections, count sections per page
+    results = (
+        db.query(
+            models.Page.id,
+            models.Page.title,
+            models.Page.hierarchy,
+            func.count(models.Section.id).label("sections")
+        )
+        .outerjoin(models.Section, models.Page.id == models.Section.page_id)
+        .filter(models.Page.domain_id.in_(domain_ids))
+        .group_by(models.Page.id)
+        .order_by(models.Page.hierarchy.asc())
+        .all()
+    )
+    # Convert to list of dicts
+    return [
+        {
+            "id": str(row.id),
+            "title": row.title,
+            "hierarchy": row.hierarchy,
+            "sections": row.sections
+        }
+        for row in results
+    ]
 
 # SECTIONS
 def create_section(db: Session, section: schemas.SectionCreate, page_id: int = None):

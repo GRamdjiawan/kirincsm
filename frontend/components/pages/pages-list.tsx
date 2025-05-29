@@ -1,131 +1,63 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Edit, MoreHorizontal, Trash, Eye } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import Link from "next/link"
-import { formatDistanceToNow } from "date-fns"
-import { Badge } from "@/components/ui/badge"
+"use client"
 
-const pages = [
-  {
-    id: "1",
-    title: "Homepage",
-    status: "published",
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
-  },
-  {
-    id: "2",
-    title: "About Us",
-    status: "published",
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4), // 4 days ago
-  },
-  {
-    id: "3",
-    title: "Services",
-    status: "published",
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6), // 6 days ago
-  },
-  {
-    id: "4",
-    title: "Contact",
-    status: "published",
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9), // 9 days ago
-  },
-  {
-    id: "5",
-    title: "Blog",
-    status: "draft",
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1), // 1 day ago
-  },
-]
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { FileText } from "lucide-react"
+
+type Page = {
+  id: string
+  title: string
+  hierarchy: number
+  sections: number
+  status: "published"
+}
 
 export function PagesList() {
+  const [pages, setPages] = useState<Page[]>([])
+
+  useEffect(() => {
+    fetch("http://localhost:8000/api/pages", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => setPages(data))
+  }, [])
+
   return (
     <Card className="backdrop-blur-md bg-white/5 border-white/10 shadow-lg rounded-xl overflow-hidden">
+      <CardHeader className="border-b border-white/10 bg-white/5 pb-4">
+        <CardTitle className="text-xl font-semibold">Pages</CardTitle>
+      </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader className="bg-white/5">
-              <TableRow className="hover:bg-white/5">
-                <TableHead>Page Name</TableHead>
-                <TableHead className="hidden sm:table-cell">Status</TableHead>
-                <TableHead className="hidden md:table-cell">Last Edited</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pages.map((page) => (
-                <TableRow key={page.id} className="hover:bg-white/5 border-white/5">
-                  <TableCell className="font-medium">
-                    <div>
-                      {page.title}
-                      <div className="md:hidden mt-1">
-                        <Badge
-                          variant="outline"
-                          className={
-                            page.status === "published"
-                              ? "border-green-500/50 text-green-400 bg-green-500/10"
-                              : "border-amber-500/50 text-amber-400 bg-amber-500/10"
-                          }
-                        >
-                          {page.status === "published" ? "Published" : "Draft"}
-                        </Badge>
-                      </div>
-                      <div className="md:hidden mt-1 text-xs text-muted-foreground">
-                        {formatDistanceToNow(page.updatedAt, { addSuffix: true })}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <Badge
-                      variant="outline"
-                      className={
-                        page.status === "published"
-                          ? "border-green-500/50 text-green-400 bg-green-500/10"
-                          : "border-amber-500/50 text-amber-400 bg-amber-500/10"
-                      }
-                    >
-                      {page.status === "published" ? "Published" : "Draft"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {formatDistanceToNow(page.updatedAt, { addSuffix: true })}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end">
-                      <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-                        <Eye className="h-4 w-4" />
-                        <span className="sr-only">Preview</span>
-                      </Button>
-                      <Button variant="ghost" size="icon" asChild className="text-gray-400 hover:text-white">
-                        <Link href={`/dashboard/pages/${page.id}`}>
-                          <Edit className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
-                        </Link>
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">More</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="backdrop-blur-md bg-black/80 border-white/10">
-                          <DropdownMenuItem>Make a copy</DropdownMenuItem>
-                          <DropdownMenuItem>Preview</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-500">
-                            <Trash className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="grid grid-cols-1 gap-0 divide-y divide-white/10">
+          {pages.map((page) => (
+            <div
+              key={page.id}
+              className="p-4 hover:bg-white/5 cursor-pointer transition-colors duration-200 flex items-center"
+              onClick={() => (window.location.href = `/dashboard/pages/${page.id}`)}
+            >
+              <div className="h-10 w-10 rounded-md bg-white/10 flex items-center justify-center mr-4 flex-shrink-0">
+                <FileText className="h-5 w-5 text-white/70" />
+              </div>
+
+              <div className="flex-grow">
+                <h3 className="font-medium text-white">{page.title}</h3>
+                <p className="text-sm text-white/60 mt-0.5">
+                  {page.sections} {page.sections === 1 ? "section" : "sections"}
+                </p>
+              </div>
+
+              <div className="ml-4 flex-shrink-0">
+                <Badge
+                  variant="outline"
+                  className={
+                      "border-green-500/50 text-green-400 bg-green-500/10"
+                  }
+                >
+                  Published
+                </Badge>
+              </div>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

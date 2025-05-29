@@ -112,7 +112,6 @@ def authenticate_user(user: schemas.UserLogin, response: Response, db: Session =
     db_user = crud.authenticate_user(db, user.email, user.password)
     if not db_user:
         raise HTTPException(status_code=400, detail="User not found")
-    
 
     token = create_access_token({"user_id": db_user.id})
     res = JSONResponse(content={"message": "Logged in", "user": db_user.email})
@@ -124,6 +123,15 @@ def authenticate_user(user: schemas.UserLogin, response: Response, db: Session =
         samesite="Lax"
     )
     return res
+@app.get("/api/users/", response_model=List[schemas.UserRead])
+def get_users(db: Session = Depends(get_db)):
+    """
+    Get all users
+    """
+    users = crud.get_users(db)
+    if not users:
+        raise HTTPException(status_code=404, detail="No users found.")
+    return users
 
 @app.put("/api/users/update")
 def update_user(
@@ -163,6 +171,14 @@ def create_page(page: schemas.PageCreate, db: Session = Depends(get_db)):
     }
     """
     return crud.create_page(db, page)
+
+@app.get("/api/pages/", response_model=List[schemas.PageWithSectionCount])
+def get_my_pages(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    return crud.get_pages_by_user_id(db, current_user.id)
+
 
 # -- SECTIONS --
 @app.post("/api/pages/{page_id}/sections/", response_model=schemas.SectionRead)

@@ -1,10 +1,9 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Literal
-from datetime import datetime
 
 # USER SCHEMAS
 class UserBase(BaseModel):
-    name: str
+    name: Optional[str]
     email: EmailStr
     role: Literal['admin', 'editor', 'client']
 
@@ -14,10 +13,10 @@ class UserCreate(UserBase):
 class UserRead(UserBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserLogin(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
     class Config:
@@ -25,10 +24,9 @@ class UserLogin(BaseModel):
             "example": {
                 "email": "string",
                 "password": "string"
-                
             }
         }
-        
+
 class UserUpdate(BaseModel):
     name: Optional[str]
     email: Optional[EmailStr]
@@ -36,8 +34,6 @@ class UserUpdate(BaseModel):
 class ChangePassword(BaseModel):
     old_password: str
     new_password: str
-
-
 
 # DOMAIN SCHEMAS
 class DomainBase(BaseModel):
@@ -50,50 +46,48 @@ class DomainCreate(DomainBase):
 class DomainRead(DomainBase):
     id: int
     class Config:
-        orm_mode = True
-
+        from_attributes = True
 
 # SECTION SCHEMAS
 class SectionBase(BaseModel):
     title: Optional[str]
-    content: Optional[str]
+    position: Optional[int]
 
 class SectionCreate(SectionBase):
-    page_id: Optional[int]
+    page_id: int
 
 class SectionRead(SectionBase):
     id: int
     page_id: int
     class Config:
-        orm_mode = True
-
+        from_attributes = True
 
 # PAGE SCHEMAS
 class PageBase(BaseModel):
-    title: str
-    slug: str
-    content: Optional[str]
-    cover_image_url: Optional[str]
+    title: Optional[str]
+    hierarchy: int
+    domain_id: Optional[int]
 
 class PageCreate(PageBase):
-    user_id: int
-    domain_id: Optional[int]
-    sections: Optional[List[SectionCreate]] = []
+    pass
 
 class PageRead(PageBase):
     id: int
-    updated_at: Optional[datetime]
-    sections: Optional[List[SectionRead]] = []
     class Config:
-        orm_mode = True
+        from_attributes = True
 
+class PageWithSectionCount(BaseModel):
+    id: str
+    title: Optional[str]
+    hierarchy: int
+    sections: int
 
 # SEO SCHEMAS
 class SEOBase(BaseModel):
-    meta_title: str
-    meta_description: str
+    meta_title: Optional[str]
+    meta_description: Optional[str]
     keywords: Optional[str]
-    og_image_url: Optional[str]
+    icon: Optional[str]
 
 class SEOCreate(SEOBase):
     domain_id: int
@@ -102,22 +96,21 @@ class SEORead(SEOBase):
     id: int
     domain_id: int
     class Config:
-        orm_mode = True
-
+        from_attributes = True
 
 # MEDIA SCHEMAS
 class MediaBase(BaseModel):
-    file_url: str
-    alt_text: Optional[str]
+    file_url: Optional[str]
+    text: Optional[str]
     type: Literal['image', 'text']
 
 class MediaCreate(MediaBase):
-    uploaded_by: int
+    uploaded_by: Optional[int]
     section_id: Optional[int]
 
 class MediaRead(MediaBase):
     id: int
+    uploaded_by: Optional[int]
     section_id: Optional[int]
-    uploaded_by: int
     class Config:
-        orm_mode = True
+        from_attributes = True

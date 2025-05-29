@@ -14,11 +14,8 @@ import {
   LayoutDashboard,
   FileText,
   ImageIcon,
-  Search,
-  Settings,
-  HelpCircle,
-  User,
   Users,
+  User,
   Globe,
   ChevronDown,
   ChevronRight,
@@ -100,21 +97,6 @@ export function Sidebar() {
       icon: ImageIcon,
       href: "/dashboard/images",
     },
-    {
-      title: "SEO",
-      icon: Search,
-      href: "/dashboard/seo",
-      subItems: [
-        {
-          title: "SEO Settings",
-          href: "/dashboard/seo",
-        },
-        {
-          title: "SEO Analytics",
-          href: "/dashboard/seo/analytics",
-        },
-      ],
-    },
     ...(isAdmin
       ? [
           {
@@ -157,64 +139,26 @@ export function Sidebar() {
         <nav className="flex-1 px-4 space-y-2">
           {sidebarItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-            const hasSubItems = item.subItems && item.subItems.length > 0
 
             return (
-              <div key={item.href} className="mb-2">
-                {hasSubItems ? (
-                  <div className="space-y-1">
-                    <div
-                      className={cn(
-                        "flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200",
-                        isActive
-                          ? "bg-gradient-to-r from-neon-blue/20 to-neon-purple/20 text-white shadow-sm"
-                          : "text-gray-400 hover:text-white hover:bg-white/5",
-                      )}
-                    >
-                      <item.icon className={cn("h-5 w-5 mr-3", isActive ? "text-neon-blue" : "text-gray-400")} />
-                      {item.title}
-                    </div>
-                    <div className="pl-12 space-y-1">
-                      {item.subItems.map((subItem) => {
-                        const isSubActive = pathname === subItem.href
-                        return (
-                          <Link
-                            key={subItem.href}
-                            href={subItem.href}
-                            className={cn(
-                              "flex items-center px-4 py-2 text-sm rounded-xl transition-all duration-200",
-                              isSubActive
-                                ? "text-white bg-white/10"
-                                : "text-gray-400 hover:text-white hover:bg-white/5",
-                            )}
-                          >
-                            {subItem.title}
-                          </Link>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200",
-                      isActive
-                        ? "bg-gradient-to-r from-neon-blue/20 to-neon-purple/20 text-white shadow-sm"
-                        : "text-gray-400 hover:text-white hover:bg-white/5",
-                    )}
-                  >
-                    <item.icon className={cn("h-5 w-5 mr-3", isActive ? "text-neon-blue" : "text-gray-400")} />
-                    {item.title}
-                  </Link>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200",
+                  isActive
+                    ? "bg-gradient-to-r from-neon-blue/20 to-neon-purple/20 text-white shadow-sm"
+                    : "text-gray-400 hover:text-white hover:bg-white/5",
                 )}
-              </div>
+              >
+                <item.icon className={cn("h-5 w-5 mr-3", isActive ? "text-neon-blue" : "text-gray-400")} />
+                {item.title}
+              </Link>
             )
           })}
         </nav>
       </div>
 
-      {/* Admin Dropdown */}
       {isAdmin ? (
         <div className="p-4 mt-auto">
           <DropdownMenu>

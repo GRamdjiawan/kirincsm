@@ -11,7 +11,7 @@ export default function PagesPage() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Your Pages</h1>
           <p className="text-muted-foreground">Create and manage your website content</p>
         </div>
-        <Button
+        {/* <Button
           asChild
           className="bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-blue/90 hover:to-neon-purple/90 text-white rounded-xl"
         >
@@ -19,7 +19,7 @@ export default function PagesPage() {
             <PlusIcon className="mr-2 h-4 w-4" />
             Create New Page
           </Link>
-        </Button>
+        </Button> */}
       </div>
 
       <PagesList />
