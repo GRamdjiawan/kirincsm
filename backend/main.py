@@ -193,6 +193,17 @@ def create_section(page_id: int, section: schemas.SectionCreate, db: Session = D
     """
     return crud.create_section(db, section, page_id)
 
+@app.get("/api/sections/{page_id}", response_model=List[schemas.SectionRead])
+def get_sections_by_page_id(
+    page_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Get all sections for a specific page, only if the page belongs to the current user.
+    """
+    return crud.get_sections_by_page_and_user(db, page_id, current_user.id)
+
 # -- DOMAINS --
 
 @app.get("/api/domains/{user_id}", response_model=schemas.DomainRead)

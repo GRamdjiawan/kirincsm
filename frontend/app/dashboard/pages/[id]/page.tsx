@@ -25,26 +25,19 @@ export default function EditPage() {
           </h1>
         </div>
         <div className="flex space-x-2 self-end sm:self-auto">
-          <Button
+          {/* <Button
             variant="outline"
             className="rounded-xl border-white/10 text-white hover:bg-white/5 h-9 px-3 sm:h-10 sm:px-4"
           >
             <Eye className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Preview</span>
-          </Button>
+          </Button> */}
           <Button className="bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-blue/90 hover:to-neon-purple/90 text-white rounded-xl h-9 px-3 sm:h-10 sm:px-4">
             <Save className="h-4 w-4 sm:mr-2" />
-            {isNewPage ? (
-              <>
-                <span className="sm:hidden">Publish</span>
-                <span className="hidden sm:inline">Publish Page</span>
-              </>
-            ) : (
               <>
                 <span className="sm:hidden">Save</span>
                 <span className="hidden sm:inline">Save Changes</span>
               </>
-            )}
           </Button>
         </div>
       </div>

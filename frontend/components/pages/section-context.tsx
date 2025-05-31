@@ -5,7 +5,7 @@ import {
   type Section,
   type SectionType,
   type SectionContent,
-  availablePages,
+  availablePages as fetchAvailablePages,
   initialSections,
   createDefaultContent,
 } from "./section-types"
@@ -73,6 +73,7 @@ export function SectionProvider({ children }: { children: React.ReactNode }) {
   const [carouselDirection, setCarouselDirection] = useState(0)
   const [isCarouselAnimating, setIsCarouselAnimating] = useState(false)
   const [isSwiping, setIsSwiping] = useState(false)
+  const [pages, setPages] = useState<{ id: string; title: string }[]>([])
 
   const touchStartX = React.useRef(0)
   const touchEndX = React.useRef(0)
@@ -81,6 +82,10 @@ export function SectionProvider({ children }: { children: React.ReactNode }) {
 
   // Check if we're in mobile view
   useEffect(() => {
+    fetchAvailablePages()
+      .then((data) => setPages(data))
+      .catch(() => setPages([]))
+    
     const checkMobileView = () => {
       setIsMobileView(window.innerWidth < 768)
       if (window.innerWidth >= 768) {
@@ -93,7 +98,7 @@ export function SectionProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", checkMobileView)
   }, [])
 
-  const selectedPage = availablePages.find((page) => page.id === selectedPageId)
+  const selectedPage = pages.find((page) => page.id === selectedPageId)
   const pageSections = sections[selectedPageId] || []
   const selectedSection = pageSections.find((section) => section.id === selectedSectionId)
 
@@ -235,6 +240,7 @@ export function SectionProvider({ children }: { children: React.ReactNode }) {
     // State
     selectedPageId,
     sections,
+    pages,
     selectedSectionId,
     draggedSectionId,
     dragOverSectionId,

@@ -69,14 +69,11 @@ export interface Section {
   content: SectionContent
 }
 
-// Mock data for pages
-export const availablePages = [
-  { id: "1", title: "Homepage" },
-  { id: "2", title: "About Us" },
-  { id: "3", title: "Services" },
-  { id: "4", title: "Contact" },
-  { id: "5", title: "Blog" },
-]
+export const availablePages = async () => {
+  const res = await fetch("http://localhost:8000/api/pages",{credentials: "include"})
+  if (!res.ok) {throw new Error("Failed to fetch pages")}
+  return res.json()
+}
 
 // Helper function to create default content based on section type
 export const createDefaultContent = (type: SectionType): SectionContent => {
