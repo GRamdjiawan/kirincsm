@@ -98,6 +98,28 @@ export function SectionProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", checkMobileView)
   }, [])
 
+  // Add this effect to fetch sections when selectedPageId changes
+  useEffect(() => {
+    if (!selectedPageId) {
+      setSections({})
+      return
+    }
+    fetch(`http://localhost:8000/api/sections/${selectedPageId}`, { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => {
+        setSections((prev) => ({
+          ...prev,
+          [selectedPageId]: Array.isArray(data) ? data : [],
+        }))
+      })
+      .catch(() => {
+        setSections((prev) => ({
+          ...prev,
+          [selectedPageId]: [],
+        }))
+      })
+  }, [selectedPageId])
+
   const selectedPage = pages.find((page) => page.id === selectedPageId)
   const pageSections = sections[selectedPageId] || []
   const selectedSection = pageSections.find((section) => section.id === selectedSectionId)

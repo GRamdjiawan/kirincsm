@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils"
 import { SectionProvider, useSectionContext } from "./section-context"
 import { SectionList } from "./section-list"
 import { SectionEditor } from "./section-editor"
-import { SectionPreview } from "./section-preview"
 
 // Section type definitions
 type SectionType = "TEXT" | "CAROUSEL" | "GALLERY" | "CARD" | "HERO"
@@ -416,9 +415,9 @@ function SectionManagerContent() {
             </div>
 
             {/* Section Preview */}
-            <div className="overflow-y-auto">
+            {/* <div className="overflow-y-auto">
               <SectionPreview />
-            </div>
+            </div> */}
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-gray-400">No section selected</div>

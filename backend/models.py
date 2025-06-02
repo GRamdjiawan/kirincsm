@@ -35,6 +35,7 @@ class Section(Base):
     title = Column(String(255))
     position = Column(Integer, default=0)
     page = relationship("Page", back_populates="sections")
+    type = Column(String(255))
     media_items = relationship("Media", back_populates="section")
 
 class Media(Base):
@@ -45,6 +46,7 @@ class Media(Base):
     uploaded_by = Column(Integer, ForeignKey('users.id'))
     section_id = Column(Integer, ForeignKey('sections.id'))
     type = Column(Enum('image', 'text'), default='image')
+    title = Column(String(255))
     section = relationship("Section", back_populates="media_items")
 
 class SEO(Base):

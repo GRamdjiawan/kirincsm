@@ -13,10 +13,12 @@ import { HeroEditor } from "./editors/hero-editor"
 export function SectionEditor() {
   const { selectedSection, updateSectionTitle } = useSectionContext()
 
+  console.log("Rendering editor for section:", selectedSection);
   if (!selectedSection) {
     return <div className="h-full flex items-center justify-center text-gray-400">No section selected</div>
   }
 
+  
   const renderEditor = () => {
     switch (selectedSection.type) {
       case "TEXT":

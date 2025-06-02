@@ -52,6 +52,7 @@ class DomainRead(DomainBase):
 class SectionBase(BaseModel):
     title: Optional[str]
     position: Optional[int]
+    type: Optional[str] 
 
 class SectionCreate(SectionBase):
     page_id: int
@@ -100,6 +101,7 @@ class SEORead(SEOBase):
 
 # MEDIA SCHEMAS
 class MediaBase(BaseModel):
+    title: Optional[str]
     file_url: Optional[str]
     text: Optional[str]
     type: Literal['image', 'text']
@@ -112,5 +114,6 @@ class MediaRead(MediaBase):
     id: int
     uploaded_by: Optional[int]
     section_id: Optional[int]
+
     class Config:
         from_attributes = True

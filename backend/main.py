@@ -249,3 +249,14 @@ def create_media(media: schemas.MediaCreate, db: Session = Depends(get_db)):
     }
     """
     return crud.create_media(db, media)
+
+@app.get("/api/media/{section_id}", response_model=List[schemas.MediaRead])
+def get_media_by_section_id(
+    section_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Get all media items for a specific section, only if the section belongs to the current user's domain.
+    """
+    return crud.get_media_by_section_and_user(db, section_id, current_user.id)

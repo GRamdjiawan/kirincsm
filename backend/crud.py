@@ -189,3 +189,9 @@ def get_media_by_section(db: Session, section_id: int):
 
 def get_media_by_user(db: Session, user_id: int):
     return db.query(models.Media).filter(models.Media.uploaded_by == user_id).all()
+
+def get_media_by_section_and_user(db, section_id, user_id):
+    return db.query(models.Media).filter(
+        models.Media.section_id == section_id,
+        models.Media.uploaded_by == user_id
+    ).all()
