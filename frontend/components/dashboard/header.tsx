@@ -22,6 +22,7 @@ export function Header() {
 
   const handleTransitionComplete = () => {
     setUser(null)
+    router.push("/")
   }
 
   const handleLogout = async () => {
