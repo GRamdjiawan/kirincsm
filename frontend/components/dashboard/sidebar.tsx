@@ -93,7 +93,7 @@ export function Sidebar() {
       href: "/dashboard/pages",
     },
     {
-      title: "Images",
+      title: "Media",
       icon: ImageIcon,
       href: "/dashboard/images",
     },

@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: May 29, 2025 at 03:37 PM
+-- Generation Time: Jul 07, 2025 at 03:22 AM
 -- Server version: 10.11.11-MariaDB
--- PHP Version: 8.4.7
+-- PHP Version: 8.4.8
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -51,10 +51,21 @@ CREATE TABLE `media` (
   `id` int(11) NOT NULL,
   `file_url` text DEFAULT NULL,
   `text` text DEFAULT NULL,
+  `domain_id` int(11) DEFAULT NULL,
   `uploaded_by` int(11) DEFAULT NULL,
   `section_id` int(11) DEFAULT NULL,
-  `type` enum('image','text') DEFAULT 'image'
+  `type` enum('image','text') DEFAULT 'image',
+  `title` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `media`
+--
+
+INSERT INTO `media` (`id`, `file_url`, `text`, `domain_id`, `uploaded_by`, `section_id`, `type`, `title`) VALUES
+(5, NULL, 'GR', 1, 6, 4, 'text', 'initials'),
+(6, NULL, 'Gianni Ramdjiawan', 1, 6, 4, 'text', 'title'),
+(26, '/uploads/test.jpg', '', 1, 6, NULL, 'image', 'test.jpg');
 
 -- --------------------------------------------------------
 
@@ -89,21 +100,24 @@ CREATE TABLE `sections` (
   `id` int(11) NOT NULL,
   `page_id` int(11) NOT NULL,
   `title` varchar(255) DEFAULT NULL,
-  `position` int(11) DEFAULT 0
+  `position` int(11) DEFAULT 0,
+  `type` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `sections`
 --
 
-INSERT INTO `sections` (`id`, `page_id`, `title`, `position`) VALUES
-(4, 1, 'Hero Section', 1),
-(5, 1, 'Skills Section', 2),
-(6, 1, 'Projects Section', 3),
-(7, 1, 'Timeline Section', 4),
-(8, 1, 'Photography & Videography Section', 5),
-(9, 2, 'Photography Gallery', 1),
-(10, 2, 'Videography Gallery', 2);
+INSERT INTO `sections` (`id`, `page_id`, `title`, `position`, `type`) VALUES
+(4, 1, 'Hero Section', 1, 'HERO'),
+(5, 1, 'Skills Section', 2, 'TEXT'),
+(6, 1, 'Projects Section', 3, 'CARD'),
+(7, 1, 'Timeline Section', 4, 'CARD'),
+(8, 1, 'Photography & Videography Section', 5, 'GALLERY'),
+(9, 2, 'Photography Gallery', 1, 'GALLERY'),
+(10, 2, 'Videography Gallery', 2, 'GALLERY'),
+(11, 1, 'is', 0, ''),
+(12, 2, 'is', 0, '');
 
 -- --------------------------------------------------------
 
@@ -172,7 +186,8 @@ ALTER TABLE `domains`
 ALTER TABLE `media`
   ADD PRIMARY KEY (`id`),
   ADD KEY `uploaded_by` (`uploaded_by`),
-  ADD KEY `section_id` (`section_id`);
+  ADD KEY `section_id` (`section_id`),
+  ADD KEY `fk_domain` (`domain_id`);
 
 --
 -- Indexes for table `pages`
@@ -216,7 +231,7 @@ ALTER TABLE `domains`
 -- AUTO_INCREMENT for table `media`
 --
 ALTER TABLE `media`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `pages`
@@ -228,7 +243,7 @@ ALTER TABLE `pages`
 -- AUTO_INCREMENT for table `sections`
 --
 ALTER TABLE `sections`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `seo`
@@ -256,6 +271,7 @@ ALTER TABLE `domains`
 -- Constraints for table `media`
 --
 ALTER TABLE `media`
+  ADD CONSTRAINT `fk_domain` FOREIGN KEY (`domain_id`) REFERENCES `domains` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `media_ibfk_1` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `media_ibfk_2` FOREIGN KEY (`section_id`) REFERENCES `sections` (`id`) ON DELETE CASCADE;
 

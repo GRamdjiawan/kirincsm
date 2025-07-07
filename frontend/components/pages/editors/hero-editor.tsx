@@ -49,7 +49,7 @@ export function HeroEditor() {
       {/* Title Input */}
       <div>
         <Label htmlFor="hero-title" className="text-sm">
-          Title
+          *Title
         </Label>
         <Input
           id="hero-title"

@@ -52,7 +52,7 @@ class DomainRead(DomainBase):
 class SectionBase(BaseModel):
     title: Optional[str]
     position: Optional[int]
-    type: Optional[str] 
+    type: str  # Made required to match database
 
 class SectionCreate(SectionBase):
     page_id: int
@@ -85,9 +85,9 @@ class PageWithSectionCount(BaseModel):
 
 # SEO SCHEMAS
 class SEOBase(BaseModel):
-    meta_title: Optional[str]
+    meta_title: Optional[str]  # Updated field name
     meta_description: Optional[str]
-    keywords: Optional[str]
+    keywords: Optional[str]  # Updated field name
     icon: Optional[str]
 
 class SEOCreate(SEOBase):
@@ -101,19 +101,29 @@ class SEORead(SEOBase):
 
 # MEDIA SCHEMAS
 class MediaBase(BaseModel):
-    title: Optional[str]
+    title: str  # Made required to match database
     file_url: Optional[str]
     text: Optional[str]
     type: Literal['image', 'text']
 
-class MediaCreate(MediaBase):
-    uploaded_by: Optional[int]
-    section_id: Optional[int]
+class MediaCreate(BaseModel):
+    title: str
+    file_url: str
+    type: str
+    domain_id: Optional[int] = None  # Added domain_id field
+    uploaded_by: int
+    section_id: Optional[int] = None
+    text: Optional[str] = None
 
 class MediaRead(MediaBase):
     id: int
+    domain_id: Optional[int]  # Added domain_id field
     uploaded_by: Optional[int]
     section_id: Optional[int]
 
     class Config:
         from_attributes = True
+
+class MediaUpdate(BaseModel):
+    title: Optional[str]
+    text: Optional[str]

@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import FastAPI, Depends, HTTPException, Response, Request
+from fastapi import FastAPI, Depends, HTTPException, Response, Request, File, UploadFile
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import models
@@ -8,8 +8,13 @@ import schemas
 import crud
 from auth import create_access_token, decode_access_token, delete_access_token
 from fastapi.middleware.cors import CORSMiddleware
+import shutil
+import os
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
+UPLOAD_DIR = "./uploads"
+
 
 # Create tables in the database
 models.Base.metadata.create_all(bind=database.engine)
@@ -26,6 +31,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount the static files directory
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Dependency to get the database session
 def get_db():
@@ -238,6 +246,26 @@ def create_seo(seo: schemas.SEOCreate, db: Session = Depends(get_db)):
     return crud.create_seo(db, seo)
 
 # -- MEDIA --
+@app.get("/api/media/domain", response_model=List[schemas.MediaRead])
+def get_media_by_domain(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Get all media items for the current user's domains.
+    """
+    # Fetch all domains for the current user
+    domain = crud.get_domains_by_user_id(db, current_user.id)
+    if not domain:
+        raise HTTPException(status_code=404, detail="No domains found for the current user")
+
+    media_items =crud.get_media_by_domain(db, domain.id)
+
+    if not media_items:
+        raise HTTPException(status_code=404, detail="No media found for the current user's domains")
+
+    return media_items
+
 @app.post("/api/media/", response_model=schemas.MediaRead)
 def create_media(media: schemas.MediaCreate, db: Session = Depends(get_db)):
     """
@@ -260,3 +288,89 @@ def get_media_by_section_id(
     Get all media items for a specific section, only if the section belongs to the current user's domain.
     """
     return crud.get_media_by_section_and_user(db, section_id, current_user.id)
+
+
+@app.post("/api/upload", response_model=schemas.MediaRead)
+async def upload_file(
+    file: UploadFile = File(...),
+    domain_id: int = None,  # Added domain_id parameter
+    section_id: int = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    # Ensure the upload directory exists
+    if not os.path.exists(UPLOAD_DIR):
+        os.makedirs(UPLOAD_DIR)
+
+    # Save the file to the server
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Get the domain for the current user
+    domain = crud.get_domains_by_user_id(db, current_user.id)
+    if not domain:
+        raise HTTPException(status_code=404, detail="Domain not found for the current user")
+
+    # Prepare metadata for the database
+    media_data = schemas.MediaCreate(
+        title=file.filename,
+        file_url=f"/uploads/{file.filename}",
+        type="image" if file.content_type.startswith("image/") else "text",
+        domain_id=domain.id,  # Extract the ID from the Domain object
+        uploaded_by=current_user.id,
+        section_id=section_id,
+        text=""
+    )
+    
+    # Save metadata to the database
+    db_media = crud.create_media(db, media_data)
+
+    return db_media
+
+@app.delete("/api/media/{media_id}", response_model=dict)
+def delete_media(
+    media_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Delete a media item by its ID.
+
+    Args:
+        media_id (int): The ID of the media item to delete.
+
+    Returns:
+        dict: A success message.
+    """
+    # Fetch the media item from the database
+    media_item = crud.delete_media(db, media_id)
+
+    # Delete the file from the uploads directory
+    file_path = os.path.join(UPLOAD_DIR, os.path.basename(media_item.file_url))
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    return {"message": f"Media item with ID {media_id} has been deleted successfully"}
+
+@app.put("/api/media/{media_id}", response_model=schemas.MediaRead)
+def update_media(
+    media_id: int,
+    update_data: schemas.MediaUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Update the title and alt text of a media item.
+
+    Args:
+        media_id (int): The ID of the media item to update.
+        update_data (schemas.MediaUpdate): The new title and alt text.
+
+    Returns:
+        schemas.MediaRead: The updated media item.
+    """
+    updated_media = crud.update_media(
+        db, media_id, update_data.title, update_data.text
+    )
+    return updated_media

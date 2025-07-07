@@ -41,7 +41,7 @@ export function SectionEditor() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h4 className="text-lg font-medium">Edit Section</h4>
-          <SectionTypeSelector />
+          {/* <SectionTypeSelector /> */}
         </div>
 
         <div>

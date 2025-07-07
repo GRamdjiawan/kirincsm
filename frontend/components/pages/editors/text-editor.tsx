@@ -4,14 +4,30 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useSectionContext } from "../section-context"
-import type { TextContent } from "../section-types"
+import { useEffect, useState } from "react"
 
 export function TextEditor() {
-  const { selectedSection, updateSectionContent } = useSectionContext()
+  const { selectedSection } = useSectionContext()
+  const [media, setMedia] = useState<any[]>([])
 
-  if (!selectedSection || selectedSection.type !== "TEXT") return null
+  useEffect(() => {
+    if (!selectedSection || selectedSection.type !== "TEXT") return
 
-  const content = selectedSection.content as TextContent
+    fetch(`http://localhost:8000/api/media/${selectedSection.id}`, { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => setMedia(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        console.error("Failed to fetch text section media:", err)
+        setMedia([])
+      })
+  }, [selectedSection])
+
+  if (!media.length) {
+    return <div className="text-gray-400">No media found for this section.</div>
+  }
+
+  // Helper to get media.text by title
+  const getMediaText = (title: string) => media.find((m) => m.title === title)?.text || ""
 
   return (
     <div className="space-y-4">
@@ -21,10 +37,11 @@ export function TextEditor() {
         </Label>
         <Input
           id="text-title"
-          value={content.title}
-          onChange={(e) => updateSectionContent("title", e.target.value)}
+          value={getMediaText("title")}
+          onChange={() => {}}
           className="bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl mt-1"
           placeholder="Enter a title for this section"
+          readOnly
         />
       </div>
 
@@ -34,10 +51,11 @@ export function TextEditor() {
         </Label>
         <Textarea
           id="text-content"
-          value={content.text}
-          onChange={(e) => updateSectionContent("text", e.target.value)}
+          value={getMediaText("content")}
+          onChange={() => {}}
           className="bg-white/5 border-white/10 focus-visible:ring-neon-blue min-h-[150px] sm:min-h-[200px] rounded-xl mt-1"
           placeholder="Enter the text content for this section..."
+          readOnly
         />
       </div>
     </div>

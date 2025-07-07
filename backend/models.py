@@ -18,6 +18,7 @@ class Domain(Base):
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     owner = relationship("User", back_populates="domains")
     pages = relationship("Page", back_populates="domain")
+    media_items = relationship("Media", back_populates="domain")
 
 class Page(Base):
     __tablename__ = 'pages'
@@ -34,8 +35,8 @@ class Section(Base):
     page_id = Column(Integer, ForeignKey('pages.id'), nullable=False)
     title = Column(String(255))
     position = Column(Integer, default=0)
+    type = Column(String(255), nullable=False)  # Added required type field
     page = relationship("Page", back_populates="sections")
-    type = Column(String(255))
     media_items = relationship("Media", back_populates="section")
 
 class Media(Base):
@@ -43,17 +44,19 @@ class Media(Base):
     id = Column(Integer, primary_key=True)
     file_url = Column(Text)
     text = Column(Text)
+    domain_id = Column(Integer, ForeignKey('domains.id'))  # Added domain_id field
     uploaded_by = Column(Integer, ForeignKey('users.id'))
     section_id = Column(Integer, ForeignKey('sections.id'))
     type = Column(Enum('image', 'text'), default='image')
-    title = Column(String(255))
+    title = Column(String(255), nullable=False)  # Made title required
     section = relationship("Section", back_populates="media_items")
+    domain = relationship("Domain", back_populates="media_items")
 
 class SEO(Base):
     __tablename__ = 'seo'
     id = Column(Integer, primary_key=True)
     domain_id = Column(Integer, ForeignKey('domains.id'), unique=True)
-    meta_title = Column(String(255))
+    meta_title = Column(String(255))  # Updated field name
     meta_description = Column(Text)
-    keywords = Column(Text)
+    keywords = Column(Text)  # Updated field name
     icon = Column(Text)

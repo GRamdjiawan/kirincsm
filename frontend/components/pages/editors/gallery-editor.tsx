@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,10 +13,30 @@ import { ImageUploader } from "../image-uploader"
 
 export function GalleryEditor() {
   const { selectedSection, updateSectionContent } = useSectionContext()
+  const content = selectedSection?.content
+  const [media, setMedia] = useState<any[]>([])
 
-  if (!selectedSection || selectedSection.type !== "GALLERY") return null
+  useEffect(() => {
+    if (!selectedSection || selectedSection.type !== "GALLERY") return
+    
 
-  const content = selectedSection.content as GalleryContent
+    fetch(`http://localhost:8000/api/media/${selectedSection.id}`, { credentials: "include" })
+      .then(res => res.json())
+      .then(data => setMedia(Array.isArray(data) ? data : []))
+      .catch(err => {
+        console.error("Failed to fetch gallery section media:", err)
+        setMedia([])
+      })
+  }, [selectedSection])
+
+  if (!content) {
+    return <div className="text-gray-400">No content to edit.</div>
+  }
+
+  if (selectedSection.type !== "GALLERY") return null
+
+  // Helper to get media.text by title
+  const getMediaText = (title: string) => media.find((m) => m.title === title)?.text || ""
 
   // Gallery-specific functions
   const addGalleryImage = () => {
@@ -52,7 +73,7 @@ export function GalleryEditor() {
         </Label>
         <Input
           id="gallery-title"
-          value={content.title}
+          value={getMediaText("title") || content.title}
           onChange={(e) => updateSectionContent("title", e.target.value)}
           className="bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl mt-1"
           placeholder="Enter a title for this gallery"
