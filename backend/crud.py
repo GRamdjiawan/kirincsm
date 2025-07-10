@@ -223,10 +223,9 @@ def delete_media(db: Session, media_id: int):
     db.commit()
     return media_item
 
-def update_media(db: Session, media_id: int, title: str, text: str):
+def update_media(db: Session, media_id: int, title: str, text: str, section_id: int):
     """
     Update the title and text (alt text) of a media item.
-
     Args:
         db (Session): The database session.
         media_id (int): The ID of the media item to update.
@@ -242,6 +241,7 @@ def update_media(db: Session, media_id: int, title: str, text: str):
 
     media_item.title = title
     media_item.text = text
+    media_item.section_id = section_id
     db.commit()
     db.refresh(media_item)
     return media_item

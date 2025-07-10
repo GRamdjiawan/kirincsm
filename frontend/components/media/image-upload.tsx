@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Upload, X, FileImage, FileVideo, AlertCircle, CheckCircle } from "lucide-react"
+import { MediaSelector } from "./media-selector"
 
 interface UploadFile {
   id: string
@@ -21,6 +22,8 @@ interface ImageUploadProps {
   maxFiles?: number
   maxFileSize?: number // in bytes
   acceptedTypes?: string[]
+  onAddMediaItems?: (items: MediaItem[]) => void // New prop
+
 }
 
 export function ImageUpload({
@@ -28,6 +31,7 @@ export function ImageUpload({
   maxFiles = 10,
   maxFileSize = 10 * 1024 * 1024, // 10MB
   acceptedTypes = ["image/*", "video/*"],
+  onAddMediaItems,
 }: ImageUploadProps) {
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
@@ -179,6 +183,19 @@ export function ImageUpload({
     return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
   }
 
+  const addMediaItems = (items: MediaItem[]) => {
+    const newFiles = items.map((item) => ({
+      id: item.id,
+      file: null, // Media library items won't have a `File` object
+      preview: item.file_url,
+      progress: 100,
+      status: "success",
+    }))
+
+    setUploadFiles((prev) => [...prev, ...newFiles])
+    onAddMediaItems?.(items)
+  }
+
   return (
     <div className="space-y-4">
       {/* Upload Area */}
@@ -216,6 +233,20 @@ export function ImageUpload({
           <p className="text-xs text-gray-500 mt-2">Maximum {maxFiles} files</p>
         </CardContent>
       </Card>
+
+      {/* Media Selector */}
+      <MediaSelector
+        onSelect={(items) => {
+          addMediaItems(items)
+        }}
+        multiple={true}
+        trigger={
+          <Button className="bg-gradient-to-r from-neon-blue to-neon-purple rounded-xl">
+            <Upload className="h-4 w-4 mr-2" />
+            Select from Media Library
+          </Button>
+        }
+      />
 
       {/* Upload Queue */}
       {uploadFiles.length > 0 && (

@@ -371,6 +371,7 @@ def update_media(
         schemas.MediaRead: The updated media item.
     """
     updated_media = crud.update_media(
-        db, media_id, update_data.title, update_data.text
+        db, media_id, update_data.title, update_data.text, update_data.section_id
     )
+
     return updated_media

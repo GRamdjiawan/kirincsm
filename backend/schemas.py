@@ -127,3 +127,4 @@ class MediaRead(MediaBase):
 class MediaUpdate(BaseModel):
     title: Optional[str]
     text: Optional[str]
+    section_id: Optional[int]
