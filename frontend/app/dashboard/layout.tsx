@@ -6,8 +6,8 @@ import { Sidebar } from "@/components/dashboard/sidebar"
 import { Header } from "@/components/dashboard/header"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/context/AuthContext"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/context/AuthContext"
 
 export default function DashboardLayout({
   children,
@@ -15,7 +15,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-    const { user, loading } = useAuth()
+  const { user, loading } = useAuth()
     const router = useRouter()
   
     useEffect(() => {
@@ -39,7 +39,7 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-200 to-dark-100">
-      {/* Mobile Header */}
+      {/* Mobile Header - Only shows toggle button */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-4 bg-black/40 backdrop-blur-xl border-b border-white/10">
         <div className="flex items-center">
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-2">
@@ -60,6 +60,8 @@ export default function DashboardLayout({
             <span className="ml-2 text-lg font-bold">Nebula CMS</span>
           </div>
         </div>
+        {/* Empty right side - profile moved to sidebar */}
+        <div></div>
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -74,7 +76,7 @@ export default function DashboardLayout({
       <div
         className={`md:hidden fixed top-0 left-0 z-40 h-full w-64 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <Sidebar />
+        <Sidebar onClose={() => setSidebarOpen(false)} />
       </div>
 
       {/* Desktop Layout */}
@@ -91,9 +93,8 @@ export default function DashboardLayout({
         </div>
       </div>
 
-      {/* Mobile Content */}
+      {/* Mobile Content - No header, just content */}
       <div className="md:hidden pt-16 min-h-screen">
-        <Header />
         <main className="p-4">{children}</main>
       </div>
     </div>

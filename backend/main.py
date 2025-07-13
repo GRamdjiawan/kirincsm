@@ -298,6 +298,7 @@ async def upload_file(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    UPLOAD_DIR = "./uploads/" + str(current_user.id)
     # Ensure the upload directory exists
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
@@ -315,7 +316,7 @@ async def upload_file(
     # Prepare metadata for the database
     media_data = schemas.MediaCreate(
         title=file.filename,
-        file_url=f"/uploads/{file.filename}",
+        file_url=f"/uploads/{current_user.id}/{file.filename}",
         type="image" if file.content_type.startswith("image/") else "text",
         domain_id=domain.id,  # Extract the ID from the Domain object
         uploaded_by=current_user.id,

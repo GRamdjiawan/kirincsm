@@ -27,6 +27,7 @@ export default function ProfilePage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
   const [passwordError, setPasswordError] = useState("")
+  const [role, setRole] = useState("")
 
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export default function ProfilePage() {
     setInitials(fullName.split(" ").map((n) => n[0]).join("").toUpperCase() || "JD") 
     setFullName(formattedName)
     setEmail(email)
+    setRole(user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase() : "User")
     
 
 
@@ -193,7 +195,7 @@ export default function ProfilePage() {
 
               <div className="flex items-center mt-2 text-xs text-muted-foreground">
                 <Globe className="h-3 w-3 mr-1" />
-                <span>Administrator</span>
+                <span>{role}</span>
               </div>
 
               <Separator className="my-4 bg-white/10" />

@@ -1,73 +1,64 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { DashboardStats } from "@/components/dashboard/dashboard-stats"
-import { RecentPages } from "@/components/dashboard/recent-pages"
+"use client"
 import { Button } from "@/components/ui/button"
-import { PlusIcon } from "lucide-react"
+import { ImageIcon } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
+import { use, useEffect, useState } from "react"
 import Link from "next/link"
 
 export default function Dashboard() {
+  // In a real app, this would come from authentication context
+  const { user } = useAuth()
+  const [userName, setUserName] = useState("John Doe")
+  useEffect(() => {
+    const fullName = user?.name || "John Doe"
+    const capitalizeName = (name: string) => {
+      return name
+      .split(" ")
+      .map((word) =>
+        ["van", "van der", "van de"].includes(word.toLowerCase())
+        ? word.toLowerCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      )
+      .join(" ")
+    }
+    
+    const formattedName = capitalizeName(fullName)
+    setUserName(formattedName)
+
+  }, [user])
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Welcome back!</h1>
-        <p className="text-muted-foreground">Here's an overview of your website performance</p>
-      </div>
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="text-center space-y-6 sm:space-y-8 max-w-4xl mx-auto">
+        {/* Welcome Message */}
+        <div className="space-y-2 sm:space-y-4">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight bg-gradient-to-r from-neon-blue via-neon-purple to-neon-blue bg-clip-text text-transparent animate-pulse">
+            Welcome
+          </h1>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-white/90">
+            {userName}
+          </h2>
+        </div>
 
-      <DashboardStats />
+        {/* Quick Link to Images */}
+        <div className="pt-4 sm:pt-8">
+          <Button
+            asChild
+            size="lg"
+            className="h-12 sm:h-14 md:h-16 px-6 sm:px-8 md:px-12 text-base sm:text-lg md:text-xl font-semibold bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-blue transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-xl"
+          >
+            <Link href="/dashboard/images" className="flex items-center gap-3 sm:gap-4">
+              <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7" />
+              <span>Manage Images</span>
+            </Link>
+          </Button>
+        </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="backdrop-blur-md bg-white/5 border-white/10 shadow-lg rounded-xl overflow-hidden">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Your latest content updates</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RecentPages />
-          </CardContent>
-        </Card>
-
-        <Card className="backdrop-blur-md bg-white/5 border-white/10 shadow-lg md:col-span-2 rounded-xl overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Common tasks to get you started</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <Button
-                asChild
-                variant="outline"
-                className="h-auto flex flex-col items-center justify-center p-6 border-white/10 hover:bg-white/5 rounded-xl"
-              >
-                <Link href="/dashboard/pages/new">
-                  <PlusIcon className="h-10 w-10 mb-2" />
-                  <span>Create New Page</span>
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="h-auto flex flex-col items-center justify-center p-6 border-white/10 hover:bg-white/5 rounded-xl"
-              >
-                <Link href="/dashboard/images">
-                  <PlusIcon className="h-10 w-10 mb-2" />
-                  <span>Upload Images</span>
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="h-auto flex flex-col items-center justify-center p-6 border-white/10 hover:bg-white/5 rounded-xl"
-              >
-                <Link href="/dashboard/help">
-                  <PlusIcon className="h-10 w-10 mb-2" />
-                  <span>Get Help</span>
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Decorative Elements */}
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute top-1/4 left-1/4 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-neon-blue/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-24 h-24 sm:w-36 sm:h-36 md:w-48 md:h-48 bg-neon-purple/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
       </div>
     </div>
   )

@@ -9,7 +9,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Bell, Menu } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { useState } from "react"
 import { LoadingScreen } from "@/components/ui/LoadingScreen"
@@ -46,42 +45,33 @@ export function Header() {
   }
 
   if (showTransition) {
-    return (
-      <LoadingScreen
-        message="Logging out..."
-        timeout={1000}
-        onComplete={handleTransitionComplete}
-      />
-    )
+    return <LoadingScreen message="Logging out..." timeout={1000} onComplete={handleTransitionComplete} />
   }
 
   const name = user?.name ?? ""
   const initials =
-    name.split(" ").map((n) => n[0]).join("").toUpperCase() || "JD"
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase() || "JD"
 
   function openProfile() {
     router.push("/dashboard/profile")
   }
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-white/10 bg-gradient-to-r from-black/60 to-dark-100/60 backdrop-blur-xl px-4 md:px-6">
-      {/* Mobile menu button */}
-      {/* <Button variant="ghost" size="icon" className="md:hidden">
-        <Menu className="h-5 w-5" />
-        <span className="sr-only">Toggle Menu</span>
-      </Button> */}
+    // Header is now hidden on mobile (only shows on md and up)
+    <header className="hidden md:flex sticky top-0 z-10 h-16 items-center justify-between border-b border-white/10 bg-gradient-to-r from-black/60 to-dark-100/60 backdrop-blur-xl px-6">
+      {/* Left side - could add breadcrumbs or page title here */}
+      <div className="flex items-center">{/* Future: breadcrumbs or page title */}</div>
 
-      {/* Right side actions */}
-      <div className="flex items-center space-x-2 ml-auto">
-        {/* <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-neon-purple rounded-full" />
-        </Button> */}
-
+      {/* Right side actions - Desktop only */}
+      <div className="flex items-center space-x-2 flex-shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-neon-blue to-neon-purple flex items-center justify-center text-white font-semibold">
+            <Button variant="ghost" size="icon" className="rounded-full flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-neon-blue to-neon-purple flex items-center justify-center text-white font-semibold text-sm">
                 {initials}
               </div>
               <span className="sr-only">User menu</span>

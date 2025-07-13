@@ -22,9 +22,10 @@ import {
   Check,
 } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/context/AuthContext"
+import { LoadingScreen } from "@/components/ui/LoadingScreen"
 
 const defaultAdminSites = [
   { name: "Main Website", url: "main-website.com", id: "site1" },
@@ -33,14 +34,21 @@ const defaultAdminSites = [
   { name: "Landing Page", url: "landing.example.com", id: "site4" },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void
+}
+
+export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname()
-  const { user } = useAuth()
+  const router = useRouter()
+  const { user, setUser, loading } = useAuth()
   const isAdmin = user?.role === "admin"
 
   const [adminSitesData, setAdminSitesData] = useState(defaultAdminSites)
   const [selectedSite, setSelectedSite] = useState(defaultAdminSites[0])
   const [clientDomain, setClientDomain] = useState()
+  const [state, setState] = useState("media-only")
+  const [showTransition, setShowTransition] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -79,7 +87,45 @@ export function Sidebar() {
     }
   }, [isAdmin, user])
 
+  const handleTransitionComplete = () => {
+    setUser(null)
+    router.push("/")
+  }
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/logout", {
+        method: "POST",
+        credentials: "include",
+      })
+      if (!response.ok) {
+        console.error("Failed to log out")
+      } else {
+        setShowTransition(true)
+      }
+    } catch (error) {
+      console.error("An error occurred during logout:", error)
+    }
+  }
+
+  const openProfile = () => {
+    router.push("/dashboard/profile")
+    onClose?.() // Close mobile sidebar when navigating
+  }
+
   if (!user) return null
+
+  if (showTransition) {
+    return <LoadingScreen message="Logging out..." timeout={1000} onComplete={handleTransitionComplete} />
+  }
+
+  const name = user?.name ?? ""
+  const initials =
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase() || "JD"
 
   const sidebarItems = [
     {
@@ -87,16 +133,25 @@ export function Sidebar() {
       icon: LayoutDashboard,
       href: "/dashboard",
     },
-    {
-      title: "Pages",
-      icon: FileText,
-      href: "/dashboard/pages",
-    },
-    {
-      title: "Media",
-      icon: ImageIcon,
-      href: "/dashboard/images",
-    },
+    ...(clientDomain
+      ? [
+          ...(state === "media-only"
+            ? [
+                {
+                  title: "Media",
+                  icon: ImageIcon,
+                  href: "/dashboard/images",
+                },
+              ]
+            : [
+                {
+                  title: "Pages",
+                  icon: FileText,
+                  href: "/dashboard/pages",
+                },
+              ]),
+        ]
+      : []),
     ...(isAdmin
       ? [
           {
@@ -115,6 +170,7 @@ export function Sidebar() {
 
   return (
     <div className="h-screen flex flex-col bg-black/40 backdrop-blur-xl border-r border-white/10">
+      {/* Header with logo and mobile profile */}
       <div className="flex items-center justify-between px-4 h-16">
         <div className="flex items-center">
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-neon-purple to-neon-blue shadow-glow-purple">
@@ -130,9 +186,27 @@ export function Sidebar() {
           </div>
           <span className="ml-3 text-xl font-bold">Nebula CMS</span>
         </div>
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+
+        {/* Mobile Profile Button - Only visible on mobile */}
+        <div className="md:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-neon-blue to-neon-purple flex items-center justify-center text-white font-semibold text-sm">
+                  {initials}
+                </div>
+                <span className="sr-only">User menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="backdrop-blur-md bg-black/80 border-white/10">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={openProfile}>Profile</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <div className="mt-6 flex-1 flex flex-col overflow-y-auto">
@@ -144,6 +218,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={onClose} // Close mobile sidebar when navigating
                 className={cn(
                   "flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200",
                   isActive
@@ -157,6 +232,17 @@ export function Sidebar() {
             )
           })}
         </nav>
+      </div>
+
+      {/* Mobile Logout Button */}
+      <div className="md:hidden p-4 border-t border-white/10">
+        <Button
+          variant="outline"
+          className="w-full justify-center border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 rounded-xl"
+          onClick={handleLogout}
+        >
+          Log out
+        </Button>
       </div>
 
       {isAdmin ? (
