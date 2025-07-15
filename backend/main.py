@@ -21,7 +21,9 @@ models.Base.metadata.create_all(bind=database.engine)
 
 origins = [
     "http://localhost:3000",  # Replace with the URL of your Next.js frontend
-    "https://nebula-cms.nl",  # For production environment
+    "https://www.nebula-cms.nl",
+    "https://nebula-cms.nl",
+    "https://api.nebula-cms.nl",
 ]
 
 app.add_middleware(
@@ -109,8 +111,8 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         key="access_token",
         value=token,
         httponly=True,
-        secure=False,  # Set True in production (HTTPS)
-        samesite="Lax"
+        secure=True,  # Set True in production (HTTPS)
+        samesite="none"
     )
     return res
 
@@ -127,8 +129,8 @@ def authenticate_user(user: schemas.UserLogin, response: Response, db: Session =
         key="access_token",
         value=token,
         httponly=True,
-        secure=False,  # Set True in production (HTTPS)
-        samesite="Lax"
+        secure=True,  # Set True in production (HTTPS)
+        samesite="none"
     )
     return res
 @app.get("/api/users/", response_model=List[schemas.UserRead])
@@ -298,7 +300,20 @@ async def upload_file(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    UPLOAD_DIR = "./uploads/" + str(current_user.id)
+    MAX_FILE_SIZE_MB = 200  # Maximum file size in MB
+
+    # Read file contents
+    contents = await file.read()
+
+    # Check file size
+    if len(contents) > MAX_FILE_SIZE_MB * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large")
+    # Get the domain for the current user
+    domain = crud.get_domains_by_user_id(db, current_user.id)
+    if not domain:
+        raise HTTPException(status_code=404, detail="Domain not found for the current user")
+
+    UPLOAD_DIR = "./uploads/" + str(current_user.id) + str(domain.name)
     # Ensure the upload directory exists
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
@@ -306,17 +321,13 @@ async def upload_file(
     # Save the file to the server
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        buffer.write(contents)
 
-    # Get the domain for the current user
-    domain = crud.get_domains_by_user_id(db, current_user.id)
-    if not domain:
-        raise HTTPException(status_code=404, detail="Domain not found for the current user")
 
     # Prepare metadata for the database
     media_data = schemas.MediaCreate(
         title=file.filename,
-        file_url=f"/uploads/{current_user.id}/{file.filename}",
+        file_url=f"/uploads/{current_user.id}{domain.name}/{file.filename}",
         type="image" if file.content_type.startswith("image/") else "text",
         domain_id=domain.id,  # Extract the ID from the Domain object
         uploaded_by=current_user.id,

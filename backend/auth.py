@@ -3,8 +3,8 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Dict
 
-SECRET_KEY = "07amagneticstablemonumentsnewsystem08"
-ALGORITHM = "HS256"
+SECRET_KEY = "SECRET_KEY"  
+ALGORITHM = "Algorithm" 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 
 # In-memory blacklist store (for testing only)
