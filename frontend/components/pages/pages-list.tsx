@@ -17,7 +17,7 @@ export function PagesList() {
   const [pages, setPages] = useState<Page[]>([])
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/pages", { credentials: "include" })
+    fetch("https://api.nebula-cms.nl/api/pages", { credentials: "include" })
       .then(res => res.json())
       .then(data => setPages(data))
   }, [])

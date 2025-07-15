@@ -7,8 +7,30 @@ import Link from "next/link"
 
 export default function Dashboard() {
   // In a real app, this would come from authentication context
+  const [hasDomain, setHasDomain] = useState(false)
   const { user } = useAuth()
   const [userName, setUserName] = useState("John Doe")
+  
+  useEffect(() => {
+  if (user) {
+    fetch(`https://api.nebula-cms.nl/api/domains/${user.id}`, {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data?.length > 0) {
+          setHasDomain(true)
+        } else {
+          setHasDomain(false)
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching domains:", error)
+        setHasDomain(false)
+      })
+  }
+}, [user])
   useEffect(() => {
     const fullName = user?.name || "John Doe"
     const capitalizeName = (name: string) => {
@@ -40,19 +62,37 @@ export default function Dashboard() {
           </h2>
         </div>
 
-        {/* Quick Link to Images */}
-        <div className="pt-4 sm:pt-8">
-          <Button
-            asChild
-            size="lg"
-            className="h-12 sm:h-14 md:h-16 px-6 sm:px-8 md:px-12 text-base sm:text-lg md:text-xl font-semibold bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-blue transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-xl"
-          >
-            <Link href="/dashboard/images" className="flex items-center gap-3 sm:gap-4">
-              <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7" />
-              <span>Manage Images</span>
-            </Link>
-          </Button>
-        </div>
+        {hasDomain && (
+          <div className="pt-4 sm:pt-8">
+            <Button
+              asChild
+              size="lg"
+              className="h-12 sm:h-14 md:h-16 px-6 sm:px-8 md:px-12 text-base sm:text-lg md:text-xl font-semibold bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-blue transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-xl"
+            >
+              <Link href="/dashboard/images" className="flex items-center gap-3 sm:gap-4">
+                <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7" />
+                <span>Manage Images</span>
+              </Link>
+            </Button>
+          </div>
+        )}
+
+        {!hasDomain && (
+          <div className="pt-4 sm:pt-8">
+            <Button
+              asChild
+              size="lg"
+              className="h-12 sm:h-14 md:h-16 px-6 sm:px-8 md:px-12 text-base sm:text-lg md:text-xl font-semibold bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-blue transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-xl"
+            >
+              {/* <Link href="/dashboard/domains" className="flex items-center gap-3 sm:gap-4">
+                <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7" />
+                <span>Get Started</span>
+              </Link> */}
+              <span>No domain linked</span>
+
+            </Button>
+          </div>
+        )}
 
         {/* Decorative Elements */}
         <div className="absolute inset-0 -z-10 overflow-hidden">

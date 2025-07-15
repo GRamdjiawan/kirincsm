@@ -37,7 +37,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
   
     const fetchUser = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/me', {
+        const res = await fetch('https://api.nebula-cms.nl/api/me', {
           method: 'GET',
           credentials: 'include',
         })

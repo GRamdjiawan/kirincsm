@@ -45,7 +45,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const fetchMedia = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/media/domain`, {
+        const response = await fetch(`https://api.nebula-cms.nl/api/media/domain`, {
           method: "GET",
           credentials: "include",
         })
@@ -77,7 +77,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     const formData = new FormData()
     formData.append("file", file)
 
-    const response = await fetch(`http://localhost:8000/api/media/upload`, {
+    const response = await fetch(`https://api.nebula-cms.nl/media/upload`, {
       method: "POST",
       body: formData,
       credentials: "include",

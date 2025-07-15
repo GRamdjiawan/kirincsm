@@ -54,7 +54,7 @@ export default function ImagesPage() {
     const fetchMedia = async () => {
       setIsLoading(true)
       try {
-        const response = await fetch(`http://localhost:8000/api/media/domain`, {
+        const response = await fetch(`https://api.nebula-cms.nl/api/media/domain`, {
           method: "GET",
           credentials: "include",
         })
@@ -98,7 +98,7 @@ export default function ImagesPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/media/${id}`, {
+      const response = await fetch(`https://api.nebula-cms.nl/api/media/${id}`, {
         method: "DELETE",
         credentials: "include",
       })
@@ -115,7 +115,7 @@ export default function ImagesPage() {
   const handleUpdate = async (id: number, updatedData: { title: string; text: string }) => {
     setIsUpdating(true)
     try {
-      const response = await fetch(`http://localhost:8000/api/media/${id}`, {
+      const response = await fetch(`https://api.nebula-cms.nl/api/media/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -365,7 +365,7 @@ export default function ImagesPage() {
                         <div className="relative aspect-square overflow-hidden rounded-t-xl">
                           {item.type === "image" ? (
                             <Image
-                              src={`http://localhost:8000${item.file_url}`}
+                              src={`https://api.nebula-cms.nl${item.file_url}`}
                               alt={item.text || item.title || item.file_url}
                               fill
                               className="object-cover transition-transform duration-300 group-hover:scale-110"
@@ -414,7 +414,7 @@ export default function ImagesPage() {
                           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0">
                             {item.type === "image" ? (
                               <Image
-                                src={`http://localhost:8000${item.file_url}`}
+                                src={`https://api.nebula-cms.nl${item.file_url}`}
                                 alt={item.text || item.title || item.file_url}
                                 width={64}
                                 height={64}
@@ -505,7 +505,7 @@ export default function ImagesPage() {
                       {selectedItem.type === "image" ? (
                         <div className="relative w-full h-full">
                           <Image
-                            src={`http://localhost:8000${selectedItem.file_url}`}
+                            src={`https://api.nebula-cms.nl${selectedItem.file_url}`}
                             alt={selectedItem.text || selectedItem.title || selectedItem.file_url}
                             fill
                             className="object-contain"

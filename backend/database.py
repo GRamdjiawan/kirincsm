@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import DateTime, Column
 from datetime import datetime
 
-DATABASE_URL = "mysql+pymysql://root:root@localhost:3306/nebula-cms"
+DATABASE_URL = "mysql+pymysql://root:root@localhost:3306/mydatabase"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)

@@ -204,6 +204,16 @@ def get_media_by_section_and_user(db, section_id, user_id):
 def get_media_by_domain(db: Session, domain_id: int):
     return db.query(models.Media).filter(models.Media.domain_id == domain_id).all()
 
+def get_all_media_by_domain(db: Session, domain_id: int):
+    return db.query(
+        models.Media.id,
+        models.Media.title,
+        models.Media.file_url,
+        models.Media.type,
+        models.Media.domain_id,
+        models.Media.section_id,
+        models.Media.text
+    ).filter(models.Media.domain_id == domain_id).all()
 def delete_media(db: Session, media_id: int):
     """
     Delete a media item from the database by its ID.

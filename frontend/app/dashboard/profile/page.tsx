@@ -71,7 +71,7 @@ export default function ProfilePage() {
     setIsChangingPassword(true)
   
     try {
-      const response = await fetch("http://localhost:8000/api/users/change-password", {
+      const response = await fetch("https://api.nebula-cms.nl/api/users/change-password", {
         method: "PUT",
         credentials: "include",
         headers: {
@@ -94,7 +94,7 @@ export default function ProfilePage() {
 
         alert("Password changed successfully. You will be logged out.")
         try {
-          const response = await fetch("http://localhost:8000/api/logout", {
+          const response = await fetch("https://api.nebula-cms.nl/api/logout", {
             method: "POST",
             credentials: "include",
           })
@@ -143,7 +143,7 @@ export default function ProfilePage() {
     setIsLoading(true)
   
     try {
-      const response = await fetch("http://localhost:8000/api/users/update", {
+      const response = await fetch("https://api.nebula-cms.nl/api/users/update", {
         method: "PUT",
         credentials: "include",
         headers: {

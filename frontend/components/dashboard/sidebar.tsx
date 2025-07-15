@@ -54,7 +54,7 @@ export function Sidebar({ onClose }: SidebarProps) {
     if (!user) return
 
     if (isAdmin) {
-      fetch("http://localhost:8000/api/domains", {
+      fetch("https://api.nebula-cms.nl/api/domains", {
         method: "GET",
         credentials: "include",
       })
@@ -70,7 +70,7 @@ export function Sidebar({ onClose }: SidebarProps) {
           console.error("Error fetching domains:", error)
         })
     } else {
-      fetch(`http://localhost:8000/api/domains/${user?.id}`, {
+      fetch(`https://api.nebula-cms.nl/api/domains/${user?.id}`, {
         method: "GET",
         credentials: "include",
       })
@@ -94,7 +94,7 @@ export function Sidebar({ onClose }: SidebarProps) {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/logout", {
+      const response = await fetch("https://api.nebula-cms.nl/api/logout", {
         method: "POST",
         credentials: "include",
       })

@@ -128,3 +128,15 @@ class MediaUpdate(BaseModel):
     title: Optional[str]
     text: Optional[str]
     section_id: Optional[int]
+
+class MediaNoUploadedBy(BaseModel):
+    id: int
+    title: str
+    file_url: str
+    type: str
+    domain_id: int
+    section_id: Optional[int]
+    text: Optional[str]
+
+    class Config:
+        orm_mode = True

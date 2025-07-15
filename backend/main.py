@@ -19,14 +19,14 @@ UPLOAD_DIR = "./uploads"
 # Create tables in the database
 models.Base.metadata.create_all(bind=database.engine)
 
-# origins = [
-#     "http://localhost:3000",  # Replace with the URL of your Next.js frontend
-#     "https://your-frontend-url.com",  # For production environment
-# ]
+origins = [
+    "http://localhost:3000",  # Replace with the URL of your Next.js frontend
+    "https://nebula-cms.nl",  # For production environment
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Your frontend origin
+    allow_origins=origins,  # Your frontend origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -376,3 +376,23 @@ def update_media(
     )
 
     return updated_media
+
+@app.get("/api/fill-gallery/{domain_id}", response_model=List[schemas.MediaNoUploadedBy])
+def fill_gallery(domain_id: str, db: Session = Depends(get_db)):
+    """
+    Get all images for a domain using an encrypted domain ID.
+    Args:
+        encrypted_id (str): The encrypted domain ID.
+
+    Returns:
+        List[schemas.MediaRead]: List of media items for the domain.
+    """
+
+    # Fetch media items for the domain
+    media_items = crud.get_all_media_by_domain(db, domain_id)
+    if not media_items:
+        raise HTTPException(status_code=404, detail="No media found for the domain")
+
+    # Filter only images
+    images = [item for item in media_items if item.type == "image"]
+    return images
