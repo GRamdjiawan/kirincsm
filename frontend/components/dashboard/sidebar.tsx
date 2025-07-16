@@ -199,9 +199,10 @@ export function Sidebar({ onClose }: SidebarProps) {
         </div>
       </div>
 
-      {/* Navigation Section */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col px-4 py-4 min-h-0">
-        <nav className="space-y-2">
+        {/* Navigation Section */}
+        <nav className="space-y-2 flex-shrink-0">
           {sidebarItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
 
@@ -224,55 +225,63 @@ export function Sidebar({ onClose }: SidebarProps) {
           })}
         </nav>
 
-        {/* Spacer for mobile ergonomics - pushes content to thumb-friendly zone */}
-        <div className="flex-1 min-h-[120px] md:min-h-[60px]" />
+        {/* Flexible spacer that grows to push bottom content up */}
+        <div className="flex-1" />
 
-        {/* Domain/User Info Section - Positioned in thumb-friendly zone */}
-        <div className="space-y-3 mb-6 md:mb-4">
+        {/* Bottom Action Section - Positioned above iOS home indicator */}
+        <div className="flex-shrink-0 space-y-4 pb-8 pt-6">
+          {/* Domain/User Info Section */}
           {isAdmin ? (
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 shadow-lg">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between h-auto p-0 hover:bg-transparent">
+                  <Button variant="ghost" className="w-full justify-between h-auto p-0 hover:bg-transparent group">
                     <div className="flex items-center min-w-0 text-left">
-                      <Globe className="h-4 w-4 mr-3 text-neon-blue flex-shrink-0" />
+                      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 mr-3 flex-shrink-0 group-hover:from-neon-blue/30 group-hover:to-neon-purple/30 transition-all duration-200">
+                        <Globe className="h-5 w-5 text-neon-blue" />
+                      </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{selectedSite?.name}</p>
+                        <p className="text-sm font-semibold text-white truncate">{selectedSite?.name}</p>
                         <p className="text-xs text-gray-400 truncate">{selectedSite?.url}</p>
                       </div>
                     </div>
-                    <ChevronDown className="h-4 w-4 ml-2 text-gray-400 flex-shrink-0" />
+                    <ChevronDown className="h-4 w-4 ml-2 text-gray-400 flex-shrink-0 group-hover:text-white transition-colors duration-200" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[280px] backdrop-blur-md bg-black/80 border-white/10">
-                  <DropdownMenuLabel>Select Website</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                <DropdownMenuContent
+                  align="end"
+                  className="w-[300px] backdrop-blur-md bg-black/90 border-white/20 shadow-2xl"
+                >
+                  <DropdownMenuLabel className="text-white">Select Website</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-white/10" />
                   {adminSitesData.map((site) => (
                     <DropdownMenuItem
                       key={site.id}
-                      className="flex items-center justify-between cursor-pointer"
+                      className="flex items-center justify-between cursor-pointer hover:bg-white/10 focus:bg-white/10"
                       onClick={() => setSelectedSite(site)}
                     >
                       <div className="flex flex-col min-w-0">
-                        <span className="truncate">{site.name}</span>
+                        <span className="truncate text-white">{site.name}</span>
                         <span className="text-xs text-gray-400 truncate">{site.url}</span>
                       </div>
                       {selectedSite?.id === site.id && <Check className="h-4 w-4 text-neon-blue flex-shrink-0" />}
                     </DropdownMenuItem>
                   ))}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <span className="text-neon-purple">+ Add New Website</span>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem className="hover:bg-white/10 focus:bg-white/10">
+                    <span className="text-neon-purple font-medium">+ Add New Website</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           ) : (
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 shadow-lg">
               <div className="flex items-center min-w-0">
-                <User className="h-4 w-4 mr-3 text-neon-blue flex-shrink-0" />
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 mr-3 flex-shrink-0">
+                  <User className="h-5 w-5 text-neon-blue" />
+                </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{user?.name || "User"}</p>
+                  <p className="text-sm font-semibold text-white truncate">{user?.name || "User"}</p>
                   <p className="text-xs text-gray-400 truncate">{clientDomain || "example.com"}</p>
                 </div>
               </div>
@@ -282,16 +291,13 @@ export function Sidebar({ onClose }: SidebarProps) {
           {/* Logout Button - Positioned for easy thumb access */}
           <Button
             variant="outline"
-            className="w-full justify-center h-12 border-red-500/20 bg-red-500/5 backdrop-blur-sm hover:bg-red-500/10 hover:border-red-500/30 rounded-xl text-red-400 hover:text-red-300 transition-all duration-200"
+            className="w-full justify-center h-14 border-red-500/30 bg-gradient-to-r from-red-500/10 to-red-600/10 backdrop-blur-sm hover:from-red-500/20 hover:to-red-600/20 hover:border-red-500/50 rounded-2xl text-red-400 hover:text-red-300 transition-all duration-300 shadow-lg hover:shadow-red-500/20 active:scale-[0.98] font-medium"
             onClick={handleLogout}
           >
-            <LogOut className="h-4 w-4 mr-2" />
+            <LogOut className="h-5 w-5 mr-3" />
             Log out
           </Button>
         </div>
-
-        {/* Bottom safe area for mobile devices */}
-        <div className="h-4 md:h-2 flex-shrink-0" />
       </div>
     </div>
   )
