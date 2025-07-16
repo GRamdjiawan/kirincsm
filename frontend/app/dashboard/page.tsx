@@ -14,7 +14,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (user) {
       setLoadingDomain(true) // Start loading
-      fetch(`https://api.nebula-cms.nl/api/domains/${user.id}`, {
+      fetch(`https://api.kirin-cms.nl/api/domains/${user.id}`, {
         method: "GET",
         credentials: "include",
       })

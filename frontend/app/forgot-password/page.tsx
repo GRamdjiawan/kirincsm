@@ -2,8 +2,8 @@ import { ForgotPasswordForm } from "@/components/auth/forgot-password-form"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Forgot Password | Nebula CMS",
-  description: "Reset your Nebula CMS password",
+  title: "Forgot Password | Kirin CMS",
+  description: "Reset your Kirin CMS password",
 }
 
 export default function ForgotPasswordPage() {

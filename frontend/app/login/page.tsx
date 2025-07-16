@@ -2,8 +2,8 @@ import { LoginForm } from "@/components/auth/login-form"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Login | Nebula CMS",
-  description: "Login to your Nebula CMS account",
+  title: "Login | Kirin CMS",
+  description: "Login to your Kirin CMS account",
 }
 
 export default function LoginPage() {
