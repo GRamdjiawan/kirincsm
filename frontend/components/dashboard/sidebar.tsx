@@ -228,10 +228,19 @@ export function Sidebar({ onClose }: SidebarProps) {
         {/* Flexible spacer that grows to push bottom content up */}
         <div className="flex-1" />
 
+
         {/* Bottom Action Section - Positioned above iOS home indicator */}
         <div className="flex-shrink-0 space-y-4 pb-8 pt-6">
+          <Button
+            variant="outline"
+            className="w-full justify-center h-14 border-red-500/30 bg-gradient-to-r from-red-500/10 to-red-600/10 backdrop-blur-sm hover:from-red-500/20 hover:to-red-600/20 hover:border-red-500/50 rounded-2xl text-red-400 hover:text-red-300 transition-all duration-300 shadow-lg hover:shadow-red-500/20 active:scale-[0.98] font-medium"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-5 w-5 mr-3" />
+            Log out
+          </Button>
           {/* Domain/User Info Section */}
-          {isAdmin ? (
+          {isAdmin && (
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 shadow-lg">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -274,8 +283,9 @@ export function Sidebar({ onClose }: SidebarProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          ) : (
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 shadow-lg">
+          )}
+
+          {/* <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 shadow-lg">
               <div className="flex items-center min-w-0">
                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 mr-3 flex-shrink-0">
                   <User className="h-5 w-5 text-neon-blue" />
@@ -285,20 +295,14 @@ export function Sidebar({ onClose }: SidebarProps) {
                   <p className="text-xs text-gray-400 truncate">{clientDomain || "example.com"}</p>
                 </div>
               </div>
-            </div>
-          )}
+            </div> */}
 
           {/* Logout Button - Positioned for easy thumb access */}
-          <Button
-            variant="outline"
-            className="w-full justify-center h-14 border-red-500/30 bg-gradient-to-r from-red-500/10 to-red-600/10 backdrop-blur-sm hover:from-red-500/20 hover:to-red-600/20 hover:border-red-500/50 rounded-2xl text-red-400 hover:text-red-300 transition-all duration-300 shadow-lg hover:shadow-red-500/20 active:scale-[0.98] font-medium"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-5 w-5 mr-3" />
-            Log out
-          </Button>
+          
         </div>
+
       </div>
+      <div className="pt-5"></div>
     </div>
   )
 }
