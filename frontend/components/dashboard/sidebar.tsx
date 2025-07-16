@@ -54,7 +54,7 @@ export function Sidebar({ onClose }: SidebarProps) {
     if (!user) return
 
     if (isAdmin) {
-      fetch("https://api.nebula-cms.nl/api/domains", {
+      fetch("https://api.kirin-cms.nl/api/domains", {
         method: "GET",
         credentials: "include",
       })
@@ -70,7 +70,7 @@ export function Sidebar({ onClose }: SidebarProps) {
           console.error("Error fetching domains:", error)
         })
     } else {
-      fetch(`https://api.nebula-cms.nl/api/domains/${user?.id}`, {
+      fetch(`https://api.kirin-cms.nl/api/domains/${user?.id}`, {
         method: "GET",
         credentials: "include",
       })
@@ -94,7 +94,7 @@ export function Sidebar({ onClose }: SidebarProps) {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("https://api.nebula-cms.nl/api/logout", {
+      const response = await fetch("https://api.kirin-cms.nl/api/logout", {
         method: "POST",
         credentials: "include",
       })
@@ -184,7 +184,7 @@ export function Sidebar({ onClose }: SidebarProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <span className="ml-3 text-xl font-bold">Nebula CMS</span>
+          <span className="ml-3 text-xl font-bold">Kirin CMS</span>
         </div>
 
         {/* Mobile Profile Button - Only visible on mobile */}

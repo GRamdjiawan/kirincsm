@@ -111,7 +111,7 @@ export function ImageUpload({
       console.log(formData);
       
 
-      const response = await fetch("https://api.nebula-cms.nl/api/upload", {
+      const response = await fetch("https://api.kirin-cms.nl/api/upload", {
         method: "POST",
         body: formData,
         credentials: "include",

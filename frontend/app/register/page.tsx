@@ -2,8 +2,8 @@ import { RegisterForm } from "@/components/auth/register-form"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Register | Nebula CMS",
-  description: "Create a new Nebula CMS account",
+  title: "Register | Kirin CMS",
+  description: "Create a new Kirin CMS account",
 }
 
 export default function RegisterPage() {

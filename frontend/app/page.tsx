@@ -53,9 +53,9 @@ export default function Home() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-white">Nebula CMS</h1>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-white">Kirin CMS</h1>
           <p className="text-gray-400 max-w-md">
-            The next-generation content management system for your Vercel-hosted websites
+            The next-generation content management system
           </p>
         </div>
 

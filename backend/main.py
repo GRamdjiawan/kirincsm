@@ -21,9 +21,9 @@ models.Base.metadata.create_all(bind=database.engine)
 
 origins = [
     "http://localhost:3000",  # Replace with the URL of your Next.js frontend
-    "https://www.nebula-cms.nl",
-    "https://nebula-cms.nl",
-    "https://api.nebula-cms.nl",
+    "https://www.kirin-cms.nl",
+    "https://kirin-cms.nl",
+    "https://api.kirin-cms.nl",
 ]
 
 app.add_middleware(

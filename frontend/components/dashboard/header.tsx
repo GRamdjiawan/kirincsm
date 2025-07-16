@@ -26,7 +26,7 @@ export function Header() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("https://api.nebula-cms.nl/api/logout", {
+      const response = await fetch("https://api.kirin-cms.nl/api/logout", {
         method: "POST",
         credentials: "include",
       })

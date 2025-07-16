@@ -9,7 +9,7 @@ interface AuthBannerProps {
 
 export function AuthBanner({
   title = "Manage Your Digital Experience",
-  subtitle = "Login or register to access your Nebula CMS dashboard",
+  subtitle = "Login or register to access your Kirin CMS dashboard",
   className = "",
 }: AuthBannerProps) {
   return (

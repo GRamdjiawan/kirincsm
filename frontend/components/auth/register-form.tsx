@@ -55,7 +55,7 @@ export function RegisterForm() {
     setIsLoading(true)
   
     try {
-      const res = await fetch("https://api.nebula-cms.nl/api/register", {
+      const res = await fetch("https://api.kirin-cms.nl/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -69,7 +69,7 @@ export function RegisterForm() {
   
       if (res.ok) {
         // ✅ Automatically log in user by fetching user details
-        const meRes = await fetch("https://api.nebula-cms.nl/api/me", {
+        const meRes = await fetch("https://api.kirin-cms.nl/api/me", {
           method: "GET",
           credentials: "include",
         })
