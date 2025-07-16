@@ -53,7 +53,7 @@ export function RegisterForm() {
 
   async function onSubmit(data: RegisterFormValues) {
     setIsLoading(true)
-  
+
     try {
       const res = await fetch("https://api.kirin-cms.nl/api/register", {
         method: "POST",
@@ -65,15 +65,15 @@ export function RegisterForm() {
           password: data.password,
           role: "client",
         }),
-      });
-  
+      })
+
       if (res.ok) {
         // ✅ Automatically log in user by fetching user details
         const meRes = await fetch("https://api.kirin-cms.nl/api/me", {
           method: "GET",
           credentials: "include",
         })
-  
+
         if (meRes.ok) {
           const user = await meRes.json()
           setUser(user) // Set user in auth context
@@ -105,26 +105,18 @@ export function RegisterForm() {
 
   // Show transition animation if user is authenticated
   if (showTransition) {
-    return (
-      <LoadingScreen
-        message="Redirecting to dashboard..."
-        timeout={1000}
-        onComplete={handleTransitionComplete}
-      />
-    )
+    return <LoadingScreen message="Redirecting to dashboard..." timeout={1000} onComplete={handleTransitionComplete} />
   }
-  
-
 
   return (
-    <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
-      <div className="flex flex-col space-y-6">
+    <div className="w-full max-w-sm mx-auto relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+      <div className="flex flex-col space-y-4 sm:space-y-6">
         {/* Logo */}
         <div className="flex flex-col items-center text-center space-y-2">
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg">
+          <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-white"
+              className="h-6 w-6 sm:h-8 sm:w-8 text-white"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -132,26 +124,26 @@ export function RegisterForm() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold tracking-tighter text-white">Register</h1>
-          <p className="text-gray-400">Create your account to get started</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tighter text-white">Register</h1>
+          <p className="text-sm sm:text-base text-gray-400 text-center">Create your account to get started</p>
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-300">Full Name</FormLabel>
+                  <FormLabel className="text-gray-300 text-sm">Full Name</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="John Doe"
                       {...field}
-                      className="bg-white/5 border-white/10 focus-visible:ring-neon-blue text-white"
+                      className="bg-white/5 border-white/10 focus-visible:ring-neon-blue text-white h-10 sm:h-11"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-400" />
+                  <FormMessage className="text-red-400 text-xs" />
                 </FormItem>
               )}
             />
@@ -160,15 +152,15 @@ export function RegisterForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-300">Email</FormLabel>
+                  <FormLabel className="text-gray-300 text-sm">Email</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="name@example.com"
                       {...field}
-                      className="bg-white/5 border-white/10 focus-visible:ring-neon-blue text-white"
+                      className="bg-white/5 border-white/10 focus-visible:ring-neon-blue text-white h-10 sm:h-11"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-400" />
+                  <FormMessage className="text-red-400 text-xs" />
                 </FormItem>
               )}
             />
@@ -177,14 +169,14 @@ export function RegisterForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-300">Password</FormLabel>
+                  <FormLabel className="text-gray-300 text-sm">Password</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="Create a password"
                         {...field}
-                        className="bg-white/5 border-white/10 focus-visible:ring-neon-blue text-white pr-10"
+                        className="bg-white/5 border-white/10 focus-visible:ring-neon-blue text-white pr-10 h-10 sm:h-11"
                       />
                       <Button
                         type="button"
@@ -198,7 +190,7 @@ export function RegisterForm() {
                       </Button>
                     </div>
                   </FormControl>
-                  <FormMessage className="text-red-400" />
+                  <FormMessage className="text-red-400 text-xs" />
                 </FormItem>
               )}
             />
@@ -207,14 +199,14 @@ export function RegisterForm() {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-300">Confirm Password</FormLabel>
+                  <FormLabel className="text-gray-300 text-sm">Confirm Password</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm your password"
                         {...field}
-                        className="bg-white/5 border-white/10 focus-visible:ring-neon-blue text-white pr-10"
+                        className="bg-white/5 border-white/10 focus-visible:ring-neon-blue text-white pr-10 h-10 sm:h-11"
                       />
                       <Button
                         type="button"
@@ -228,7 +220,7 @@ export function RegisterForm() {
                       </Button>
                     </div>
                   </FormControl>
-                  <FormMessage className="text-red-400" />
+                  <FormMessage className="text-red-400 text-xs" />
                 </FormItem>
               )}
             />
@@ -236,16 +228,16 @@ export function RegisterForm() {
               control={form.control}
               name="terms"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-2">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-neon-blue data-[state=checked]:to-neon-purple data-[state=checked]:border-transparent"
+                      className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-neon-blue data-[state=checked]:to-neon-purple data-[state=checked]:border-transparent mt-1"
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel className="text-gray-300">
+                    <FormLabel className="text-gray-300 text-xs sm:text-sm leading-relaxed">
                       I agree to the{" "}
                       <Link href="/terms" className="text-neon-blue hover:text-neon-purple transition-colors">
                         terms of service
@@ -261,7 +253,7 @@ export function RegisterForm() {
             />
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-blue/90 hover:to-neon-purple/90 text-white border-0 mt-2"
+              className="w-full bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-blue/90 hover:to-neon-purple/90 text-white border-0 mt-4 h-10 sm:h-11"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -276,8 +268,7 @@ export function RegisterForm() {
           </form>
         </Form>
 
-
-        <p className="text-center text-sm text-gray-400">
+        <p className="text-center text-xs sm:text-sm text-gray-400">
           Already have an account?{" "}
           <Link href="/login" className="text-neon-blue hover:text-neon-purple transition-colors">
             Login

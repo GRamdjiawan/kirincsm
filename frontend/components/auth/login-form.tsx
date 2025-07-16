@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { z } from "zod"
@@ -23,7 +23,7 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export function LoginForm() {
   const router = useRouter()
-  const { loading, setUser } = useAuth()  // Use the setUser function from context
+  const { loading, setUser } = useAuth() // Use the setUser function from context
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
@@ -43,26 +43,25 @@ export function LoginForm() {
         method: "POST",
         credentials: "include",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          "email": data.email,
-          "password": data.password
-        })
+          email: data.email,
+          password: data.password,
+        }),
       })
-  
+
       if (loginRes.ok) {
-        
         // ✅ Fetch user after login
         const meRes = await fetch("https://api.kirin-cms.nl/api/me", {
           method: "GET",
-          credentials: "include"
+          credentials: "include",
         })
-  
+
         if (meRes.ok) {
           const user = await meRes.json()
-          setUser(user) 
-          setShowTransition(true) 
+          setUser(user)
+          setShowTransition(true)
         } else {
           console.error("Failed to fetch user after login.")
         }
@@ -74,36 +73,29 @@ export function LoginForm() {
     }
   }
 
+  const handleTransitionComplete = () => {
+    router.push("/dashboard")
+  }
 
-    const handleTransitionComplete = () => {
-      router.push("/dashboard")
-    }
-  
-    // Show loading screen while waiting for auth
-    if (loading) {
-      return <LoadingScreen message="Checking authentication..." />
-    }
-  
-    // Show transition animation if user is authenticated
-    if (showTransition) {
-      return (
-        <LoadingScreen
-          message="Redirecting to dashboard..."
-          timeout={1000}
-          onComplete={handleTransitionComplete}
-        />
-      )
-    }
+  // Show loading screen while waiting for auth
+  if (loading) {
+    return <LoadingScreen message="Checking authentication..." />
+  }
+
+  // Show transition animation if user is authenticated
+  if (showTransition) {
+    return <LoadingScreen message="Redirecting to dashboard..." timeout={1000} onComplete={handleTransitionComplete} />
+  }
 
   return (
-    <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
-      <div className="flex flex-col space-y-6">
+    <div className="w-full max-w-sm mx-auto relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+      <div className="flex flex-col space-y-4 sm:space-y-6">
         {/* Logo */}
         <div className="flex flex-col items-center text-center space-y-2">
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg">
+          <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-white"
+              className="h-6 w-6 sm:h-8 sm:w-8 text-white"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -111,26 +103,28 @@ export function LoginForm() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold tracking-tighter text-white">Login</h1>
-          <p className="text-gray-400">Enter your credentials to access your account</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tighter text-white">Login</h1>
+          <p className="text-sm sm:text-base text-gray-400 text-center">
+            Enter your credentials to access your account
+          </p>
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-300">Email</FormLabel>
+                  <FormLabel className="text-gray-300 text-sm">Email</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="name@example.com"
                       {...field}
-                      className="bg-white/5 border-white/10 focus-visible:ring-neon-blue text-white"
+                      className="bg-white/5 border-white/10 focus-visible:ring-neon-blue text-white h-10 sm:h-11"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-400" />
+                  <FormMessage className="text-red-400 text-xs" />
                 </FormItem>
               )}
             />
@@ -139,14 +133,14 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-300">Password</FormLabel>
+                  <FormLabel className="text-gray-300 text-sm">Password</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="Enter your password"
                         {...field}
-                        className="bg-white/5 border-white/10 focus-visible:ring-neon-blue text-white pr-10"
+                        className="bg-white/5 border-white/10 focus-visible:ring-neon-blue text-white pr-10 h-10 sm:h-11"
                       />
                       <Button
                         type="button"
@@ -160,13 +154,13 @@ export function LoginForm() {
                       </Button>
                     </div>
                   </FormControl>
-                  <FormMessage className="text-red-400" />
+                  <FormMessage className="text-red-400 text-xs" />
                 </FormItem>
               )}
             />
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-blue/90 hover:to-neon-purple/90 text-white border-0 mt-2"
+              className="w-full bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-blue/90 hover:to-neon-purple/90 text-white border-0 mt-4 h-10 sm:h-11"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -181,7 +175,7 @@ export function LoginForm() {
           </form>
         </Form>
 
-        <p className="text-center text-sm text-gray-400">
+        <p className="text-center text-xs sm:text-sm text-gray-400">
           Don&apos;t have an account?{" "}
           <Link href="/register" className="text-neon-blue hover:text-neon-purple transition-colors">
             Register
