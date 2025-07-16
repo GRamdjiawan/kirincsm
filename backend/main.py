@@ -300,7 +300,7 @@ async def upload_file(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    MAX_FILE_SIZE_MB = 200  # Maximum file size in MB
+    MAX_FILE_SIZE_MB = 20  # Maximum file size in MB
 
     # Read file contents
     contents = await file.read()
