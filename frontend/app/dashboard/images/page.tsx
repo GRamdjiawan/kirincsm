@@ -203,7 +203,7 @@ export default function ImagesPage() {
                 <ImageUpload
                   onUploadComplete={handleUploadComplete}
                   maxFiles={10}
-                  maxFileSize={10 * 1024 * 1024} // 10MB
+                  maxFileSize={30 * 1024 * 1024}
                 />
               </div>
             )}
