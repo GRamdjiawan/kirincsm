@@ -82,15 +82,10 @@ def get_domains_by_user_id(db: Session, user_id: int):
 
 # PAGES
 def create_page(db: Session, page: schemas.PageCreate):
-    db_page = models.Page(**page.dict(exclude={"sections"}))
+    db_page = models.Page(**page.dict())
     db.add(db_page)
     db.commit()
     db.refresh(db_page)
-
-    # Optional: create sections if provided
-    if page.sections:
-        for section in page.sections:
-            create_section(db, section, page_id=db_page.id)
 
     return db_page
 
@@ -173,6 +168,51 @@ def get_seo_by_domain(db: Session, domain_id: int):
     return db.query(models.SEO).filter(models.SEO.domain_id == domain_id).first()
 
 
+# PROJECTS
+def create_project(db: Session, project: schemas.ProjectCreate):
+    db_project = models.Project(**project.dict())
+    db.add(db_project)
+    db.commit()
+    db.refresh(db_project)
+    return db_project
+
+
+def get_projects(db: Session):
+    return db.query(models.Project).all()
+
+
+def get_project(db: Session, project_id: int):
+    return db.query(models.Project).filter(models.Project.id == project_id).first()
+
+
+def get_projects_by_domain(db: Session, domain_id: int):
+    return db.query(models.Project).filter(models.Project.domain_id == domain_id).all()
+
+
+def update_project(db: Session, project_id: int, project_update: schemas.ProjectUpdate):
+    db_project = get_project(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    update_data = project_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_project, key, value)
+
+    db.commit()
+    db.refresh(db_project)
+    return db_project
+
+
+def delete_project(db: Session, project_id: int):
+    db_project = get_project(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    db.delete(db_project)
+    db.commit()
+    return db_project
+
+
 # MEDIA
 def create_media(db: Session, media: schemas.MediaCreate):
     # Ensure title is provided since it's required in the database
@@ -204,6 +244,9 @@ def get_media_by_section_and_user(db, section_id, user_id):
 def get_media_by_domain(db: Session, domain_id: int):
     return db.query(models.Media).filter(models.Media.domain_id == domain_id).all()
 
+def get_media_by_project(db: Session, project_id: int):
+    return db.query(models.Media).filter(models.Media.project_id == project_id).all()
+
 def get_all_media_by_domain(db: Session, domain_id: int):
     return db.query(
         models.Media.id,
@@ -212,6 +255,7 @@ def get_all_media_by_domain(db: Session, domain_id: int):
         models.Media.type,
         models.Media.domain_id,
         models.Media.section_id,
+        models.Media.project_id,
         models.Media.text
     ).filter(models.Media.domain_id == domain_id).all()
 def delete_media(db: Session, media_id: int):

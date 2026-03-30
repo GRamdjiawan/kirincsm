@@ -111,7 +111,7 @@ export function ImageUpload({
       console.log(formData);
       
 
-      const response = await fetch("https://api.kirin-cms.nl/api/upload", {
+      const response = await fetch("http://localhost:8000/api/upload", {
         method: "POST",
         body: formData,
         credentials: "include",

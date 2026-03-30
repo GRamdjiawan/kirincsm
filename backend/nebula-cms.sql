@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2-1.fc42
+-- version 5.2.3-1.fc42
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jul 07, 2025 at 03:22 AM
--- Server version: 10.11.11-MariaDB
--- PHP Version: 8.4.8
+-- Generation Time: Mar 30, 2026 at 03:18 PM
+-- Server version: 10.11.16-MariaDB
+-- PHP Version: 8.4.19
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -20,6 +20,21 @@ SET time_zone = "+00:00";
 --
 -- Database: `nebula-cms`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `data`
+--
+
+CREATE TABLE `data` (
+  `id` int(11) NOT NULL,
+  `domain_id` int(11) NOT NULL,
+  `table_name` varchar(255) NOT NULL,
+  `record` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`record`)),
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -39,7 +54,8 @@ CREATE TABLE `domains` (
 
 INSERT INTO `domains` (`id`, `name`, `user_id`) VALUES
 (1, 'gianni-ramdjiawan.com', 6),
-(2, 'projecthub.io', 2);
+(2, 'projecthub.io', 2),
+(3, 'gkr-production.com', 6);
 
 -- --------------------------------------------------------
 
@@ -54,18 +70,20 @@ CREATE TABLE `media` (
   `domain_id` int(11) DEFAULT NULL,
   `uploaded_by` int(11) DEFAULT NULL,
   `section_id` int(11) DEFAULT NULL,
+  `project_id` int(11) DEFAULT NULL,
   `type` enum('image','text') DEFAULT 'image',
-  `title` varchar(255) NOT NULL
+  `title` varchar(255) NOT NULL,
+  `aspect_ratio` float DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `media`
 --
 
-INSERT INTO `media` (`id`, `file_url`, `text`, `domain_id`, `uploaded_by`, `section_id`, `type`, `title`) VALUES
-(5, NULL, 'GR', 1, 6, 4, 'text', 'initials'),
-(6, NULL, 'Gianni Ramdjiawan', 1, 6, 4, 'text', 'title'),
-(26, '/uploads/test.jpg', '', 1, 6, NULL, 'image', 'test.jpg');
+INSERT INTO `media` (`id`, `file_url`, `text`, `domain_id`, `uploaded_by`, `section_id`, `project_id`, `type`, `title`, `aspect_ratio`) VALUES
+(5, NULL, 'GR', 1, 6, 4, NULL, 'text', 'initials', NULL),
+(6, NULL, 'Gianni Ramdjiawan', 1, 6, 4, NULL, 'text', 'title', NULL),
+(26, '/uploads/test.jpg', '', 1, 6, NULL, NULL, 'image', 'test.jpg', NULL);
 
 -- --------------------------------------------------------
 
@@ -89,6 +107,21 @@ INSERT INTO `pages` (`id`, `title`, `hierarchy`, `domain_id`) VALUES
 (2, 'Gallery', 2, 1),
 (5, 'Home page', 1, 2),
 (6, 'About page', 2, 2);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `projects`
+--
+
+CREATE TABLE `projects` (
+  `id` int(11) NOT NULL,
+  `domain_id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -165,12 +198,18 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`) VALUES
 (2, 'Eddie Editor', 'eddie@example.com', 'hashed_password_2', 'editor'),
 (3, 'Clara Client', 'clara@example.com', 'hashed_password_3', 'client'),
 (6, 'Gianni test', 'test@gmail.com', '$2b$12$yAl5Gh2RJKEJP62XznBiFeVZYISmZJVNk9gHpSPYf1g2EQVByXR72', 'client'),
-(7, 'Test Test', 'test1@email.com', '$2b$12$S6Ay5bKpCyWNX6FOp1e2l.P3KNXX7AwcTIkEGz2d/B.oLnBUQgzAi', 'client'),
-(8, 'Jasmine Bungar', '22test@email.com', '$2b$12$3lrzyiTy2giO7HkpnDYtbe03/wMuIvRdh7z6TVOUCeHVZoMaWrVIq', 'client');
+(7, 'Test Test', 'test1@email.com', '$2b$12$S6Ay5bKpCyWNX6FOp1e2l.P3KNXX7AwcTIkEGz2d/B.oLnBUQgzAi', 'client');
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `data`
+--
+ALTER TABLE `data`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `domain_id` (`domain_id`);
 
 --
 -- Indexes for table `domains`
@@ -187,12 +226,20 @@ ALTER TABLE `media`
   ADD PRIMARY KEY (`id`),
   ADD KEY `uploaded_by` (`uploaded_by`),
   ADD KEY `section_id` (`section_id`),
-  ADD KEY `fk_domain` (`domain_id`);
+  ADD KEY `fk_domain` (`domain_id`),
+  ADD KEY `project_id` (`project_id`);
 
 --
 -- Indexes for table `pages`
 --
 ALTER TABLE `pages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `domain_id` (`domain_id`);
+
+--
+-- Indexes for table `projects`
+--
+ALTER TABLE `projects`
   ADD PRIMARY KEY (`id`),
   ADD KEY `domain_id` (`domain_id`);
 
@@ -222,10 +269,16 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `data`
+--
+ALTER TABLE `data`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `domains`
 --
 ALTER TABLE `domains`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `media`
@@ -238,6 +291,12 @@ ALTER TABLE `media`
 --
 ALTER TABLE `pages`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `projects`
+--
+ALTER TABLE `projects`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `sections`
@@ -262,6 +321,12 @@ ALTER TABLE `users`
 --
 
 --
+-- Constraints for table `data`
+--
+ALTER TABLE `data`
+  ADD CONSTRAINT `data_ibfk_1` FOREIGN KEY (`domain_id`) REFERENCES `domains` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `domains`
 --
 ALTER TABLE `domains`
@@ -273,13 +338,20 @@ ALTER TABLE `domains`
 ALTER TABLE `media`
   ADD CONSTRAINT `fk_domain` FOREIGN KEY (`domain_id`) REFERENCES `domains` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `media_ibfk_1` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `media_ibfk_2` FOREIGN KEY (`section_id`) REFERENCES `sections` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `media_ibfk_2` FOREIGN KEY (`section_id`) REFERENCES `sections` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `media_ibfk_3` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `pages`
 --
 ALTER TABLE `pages`
   ADD CONSTRAINT `pages_ibfk_1` FOREIGN KEY (`domain_id`) REFERENCES `domains` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `projects`
+--
+ALTER TABLE `projects`
+  ADD CONSTRAINT `projects_ibfk_1` FOREIGN KEY (`domain_id`) REFERENCES `domains` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `sections`

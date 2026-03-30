@@ -54,7 +54,7 @@ export default function ImagesPage() {
     const fetchMedia = async () => {
       setIsLoading(true)
       try {
-        const response = await fetch(`https://api.kirin-cms.nl/api/media/domain`, {
+        const response = await fetch(`http://localhost:8000/api/media/domain`, {
           method: "GET",
           credentials: "include",
         })
@@ -98,7 +98,7 @@ export default function ImagesPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`https://api.kirin-cms.nl/api/media/${id}`, {
+      const response = await fetch(`http://localhost:8000/api/media/${id}`, {
         method: "DELETE",
         credentials: "include",
       })
@@ -115,7 +115,7 @@ export default function ImagesPage() {
   const handleUpdate = async (id: number, updatedData: { title: string; text: string }) => {
     setIsUpdating(true)
     try {
-      const response = await fetch(`https://api.kirin-cms.nl/api/media/${id}`, {
+      const response = await fetch(`http://localhost:8000/api/media/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

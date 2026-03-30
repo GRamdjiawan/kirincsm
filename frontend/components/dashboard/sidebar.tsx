@@ -10,7 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { LayoutDashboard, FileText, ImageIcon, Users, User, Globe, ChevronDown, Check, LogOut } from "lucide-react"
+import { LayoutDashboard, FileText, ImageIcon, Users, User, Globe, ChevronDown, Check, LogOut, FolderClosed } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -44,7 +44,7 @@ export function Sidebar({ onClose }: SidebarProps) {
     if (!user) return
 
     if (isAdmin) {
-      fetch("https://api.kirin-cms.nl/api/domains", {
+      fetch("http://localhost:8000/api/domains", {
         method: "GET",
         credentials: "include",
       })
@@ -60,7 +60,7 @@ export function Sidebar({ onClose }: SidebarProps) {
           console.error("Error fetching domains:", error)
         })
     } else {
-      fetch(`https://api.kirin-cms.nl/api/domains/${user?.id}`, {
+      fetch(`http://localhost:8000/api/domains/${user?.id}`, {
         method: "GET",
         credentials: "include",
       })
@@ -84,7 +84,7 @@ export function Sidebar({ onClose }: SidebarProps) {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("https://api.kirin-cms.nl/api/logout", {
+      const response = await fetch("http://localhost:8000/api/logout", {
         method: "POST",
         credentials: "include",
       })
@@ -131,6 +131,11 @@ export function Sidebar({ onClose }: SidebarProps) {
                   title: "Media",
                   icon: ImageIcon,
                   href: "/dashboard/images",
+                },
+                {
+                  title: "Projects",
+                  icon: FolderClosed,
+                  href: "/dashboard/projects",
                 },
               ]
             : [

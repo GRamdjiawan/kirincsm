@@ -17,7 +17,7 @@ export function PagesList() {
   const [pages, setPages] = useState<Page[]>([])
 
   useEffect(() => {
-    fetch("https://api.kirin-cms.nl/api/pages", { credentials: "include" })
+    fetch("http://localhost:8000/api/pages", { credentials: "include" })
       .then(res => res.json())
       .then(data => setPages(data))
   }, [])

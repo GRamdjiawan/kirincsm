@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Enum, Float
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -19,6 +19,7 @@ class Domain(Base):
     owner = relationship("User", back_populates="domains")
     pages = relationship("Page", back_populates="domain")
     media_items = relationship("Media", back_populates="domain")
+    projects = relationship("Project", back_populates="domain")
 
 class Page(Base):
     __tablename__ = 'pages'
@@ -47,10 +48,24 @@ class Media(Base):
     domain_id = Column(Integer, ForeignKey('domains.id'))  # Added domain_id field
     uploaded_by = Column(Integer, ForeignKey('users.id'))
     section_id = Column(Integer, ForeignKey('sections.id'))
+    project_id = Column(Integer, ForeignKey('projects.id'), nullable=True)
     type = Column(Enum('image', 'text'), default='image')
+    aspect_ratio = Column(Float, nullable=True)  # Added aspect_ratio field
     title = Column(String(255), nullable=False)  # Made title required
     section = relationship("Section", back_populates="media_items")
     domain = relationship("Domain", back_populates="media_items")
+    project = relationship("Project", back_populates="media_items")
+
+
+class Project(Base):
+    __tablename__ = 'projects'
+    id = Column(Integer, primary_key=True)
+    domain_id = Column(Integer, ForeignKey('domains.id'), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text)
+
+    domain = relationship("Domain", back_populates="projects")
+    media_items = relationship("Media", back_populates="project")
 
 class SEO(Base):
     __tablename__ = 'seo'

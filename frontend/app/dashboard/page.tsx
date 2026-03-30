@@ -14,7 +14,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (user) {
       setLoadingDomain(true) // Start loading
-      fetch(`https://api.kirin-cms.nl/api/domains/${user.id}`, {
+      fetch(`http://localhost:8000/api/domains/${user.id}`, {
         method: "GET",
         credentials: "include",
       })

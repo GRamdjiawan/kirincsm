@@ -5,6 +5,7 @@ pydantic
 cryptography
 bcrypt
 python-multipart
-jose
+python-jose
 mysqlclient
 PyMySQL
+Pillow

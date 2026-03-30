@@ -83,6 +83,29 @@ class PageWithSectionCount(BaseModel):
     hierarchy: int
     sections: int
 
+
+# PROJECT SCHEMAS
+class ProjectBase(BaseModel):
+    domain_id: int
+    title: str
+    description: Optional[str] = None
+
+
+class ProjectCreate(ProjectBase):
+    pass
+
+
+class ProjectUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+
+class ProjectRead(ProjectBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
 # SEO SCHEMAS
 class SEOBase(BaseModel):
     meta_title: Optional[str]  # Updated field name
@@ -105,21 +128,25 @@ class MediaBase(BaseModel):
     file_url: Optional[str]
     text: Optional[str]
     type: Literal['image', 'text']
-
+    aspect_ratio: float | None = None  # h/w ratio, None for non-images
+    
 class MediaCreate(BaseModel):
     title: str
-    file_url: str
+    file_url: Optional[str] = None
     type: str
     domain_id: Optional[int] = None  # Added domain_id field
     uploaded_by: int
     section_id: Optional[int] = None
+    project_id: Optional[int] = None
     text: Optional[str] = None
+    aspect_ratio: Optional[float] = None  # Added aspect_ratio field
 
 class MediaRead(MediaBase):
     id: int
     domain_id: Optional[int]  # Added domain_id field
     uploaded_by: Optional[int]
     section_id: Optional[int]
+    project_id: Optional[int]
 
     class Config:
         from_attributes = True
