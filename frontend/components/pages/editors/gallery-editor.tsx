@@ -33,7 +33,7 @@ export function GalleryEditor() {
 
     setIsLoading(true)
 
-    fetch(`http://localhost:8000/api/media/${selectedSection.id}`, { credentials: "include" })
+    fetch(`https://api.kirin-cms.nl/api/media/${selectedSection.id}`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         setMedia(Array.isArray(data) ? data : [])
@@ -213,7 +213,7 @@ export function GalleryEditor() {
               <CardContent className="p-0">
                 <div className="aspect-square bg-white/10">
                   <img
-                    src={`http://localhost:8000${image.file_url}` || "/placeholder.svg"}
+                    src={`https://api.kirin-cms.nl/${image.file_url}` || "/placeholder.svg"}
                     alt={image.text || image.title}
                     className="w-full h-full object-cover"
                   />

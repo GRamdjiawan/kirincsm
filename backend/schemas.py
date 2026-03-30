@@ -83,6 +83,67 @@ class PageWithSectionCount(BaseModel):
     hierarchy: int
     sections: int
 
+
+# PROJECT SCHEMAS
+class ProjectBase(BaseModel):
+    domain_id: int
+    title: str
+    description: Optional[str] = None
+
+
+class ProjectCreate(ProjectBase):
+    pass
+
+
+class ProjectUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+
+class ProjectFieldDefinitionBase(BaseModel):
+    name: str
+    key_name: str
+    field_type: str = "text"
+    domain_id: Optional[int] = None
+
+
+class ProjectFieldDefinitionRead(ProjectFieldDefinitionBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ProjectFieldBase(BaseModel):
+    project_id: int
+    field_definition_id: Optional[int] = None
+    field_key: str
+    field_value: Optional[str] = None
+    field_type: str = "text"
+
+
+class ProjectFieldCreate(ProjectFieldBase):
+    pass
+
+
+class ProjectFieldUpdate(BaseModel):
+    field_value: Optional[str] = None
+    field_key: Optional[str] = None
+    field_type: Optional[str] = None
+    field_definition_id: Optional[int] = None
+
+
+class ProjectFieldRead(ProjectFieldBase):
+    id: int
+
+
+class ProjectRead(ProjectBase):
+    id: int
+    fields: List[ProjectFieldRead] = []
+
+    class Config:
+        from_attributes = True
+
 # SEO SCHEMAS
 class SEOBase(BaseModel):
     meta_title: Optional[str]  # Updated field name
@@ -105,29 +166,34 @@ class MediaBase(BaseModel):
     file_url: Optional[str]
     text: Optional[str]
     type: Literal['image', 'text']
-
+    aspect_ratio: float | None = None  # h/w ratio, None for non-images
+    
 class MediaCreate(BaseModel):
     title: str
-    file_url: str
+    file_url: Optional[str] = None
     type: str
     domain_id: Optional[int] = None  # Added domain_id field
     uploaded_by: int
     section_id: Optional[int] = None
+    project_id: Optional[int] = None
     text: Optional[str] = None
+    aspect_ratio: Optional[float] = None  # Added aspect_ratio field
 
 class MediaRead(MediaBase):
     id: int
     domain_id: Optional[int]  # Added domain_id field
     uploaded_by: Optional[int]
     section_id: Optional[int]
+    project_id: Optional[int]
 
     class Config:
         from_attributes = True
 
 class MediaUpdate(BaseModel):
-    title: Optional[str]
-    text: Optional[str]
-    section_id: Optional[int]
+    title: Optional[str] = None
+    text: Optional[str] = None
+    section_id: Optional[int] = None
+    project_id: Optional[int] = None
 
 class MediaNoUploadedBy(BaseModel):
     id: int

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from typing import Dict
 
 SECRET_KEY = "SECRET_KEY"  
-ALGORITHM = "Algorithm" 
+ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 
 # In-memory blacklist store (for testing only)

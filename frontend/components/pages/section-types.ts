@@ -70,7 +70,7 @@ export interface Section {
 }
 
 export const availablePages = async () => {
-  const res = await fetch("http://localhost:8000/api/pages",{credentials: "include"})
+  const res = await fetch("https://api.kirin-cms.nl/api/pages",{credentials: "include"})
   if (!res.ok) {throw new Error("Failed to fetch pages")}
   return res.json()
 }

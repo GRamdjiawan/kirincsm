@@ -93,7 +93,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const deleteMedia = useCallback(async (id: number) => {
-    // const response = await fetch(`http://localhost:8000/api/media/${id}`, {
+    // const response = await fetch(`https://api.kirin-cms.nl/api/media/${id}`, {
     //   method: "DELETE",
     //   credentials: "include",
     // })

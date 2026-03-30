@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload
 import models
 import schemas
 import bcrypt
@@ -78,19 +79,17 @@ def get_domain(db: Session, domain_id: int):
 def get_domains_by_user_id(db: Session, user_id: int):
     return db.query(models.Domain).filter(models.Domain.user_id == user_id).first()
 
+def get_all_domains_by_user_id(db: Session, user_id: int):
+    return db.query(models.Domain).filter(models.Domain.user_id == user_id).all()
+
 
 
 # PAGES
 def create_page(db: Session, page: schemas.PageCreate):
-    db_page = models.Page(**page.dict(exclude={"sections"}))
+    db_page = models.Page(**page.dict())
     db.add(db_page)
     db.commit()
     db.refresh(db_page)
-
-    # Optional: create sections if provided
-    if page.sections:
-        for section in page.sections:
-            create_section(db, section, page_id=db_page.id)
 
     return db_page
 
@@ -173,6 +172,107 @@ def get_seo_by_domain(db: Session, domain_id: int):
     return db.query(models.SEO).filter(models.SEO.domain_id == domain_id).first()
 
 
+# PROJECTS
+def create_project(db: Session, project: schemas.ProjectCreate):
+    db_project = models.Project(**project.dict())
+    db.add(db_project)
+    db.commit()
+    return get_project(db, db_project.id)
+
+
+def get_projects(db: Session):
+    return db.query(models.Project).all()
+
+
+def get_project(db: Session, project_id: int):
+    return (
+        db.query(models.Project)
+        .options(joinedload(models.Project.fields))
+        .filter(models.Project.id == project_id)
+        .first()
+    )
+
+
+def get_projects_by_domain(db: Session, domain_id: int):
+    return (
+        db.query(models.Project)
+        .options(joinedload(models.Project.fields))
+        .filter(models.Project.domain_id == domain_id)
+        .all()
+    )
+
+
+def update_project(db: Session, project_id: int, project_update: schemas.ProjectUpdate):
+    db_project = get_project(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    update_data = project_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_project, key, value)
+
+    db.commit()
+    return get_project(db, project_id)
+
+
+def delete_project(db: Session, project_id: int):
+    db_project = get_project(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    db.delete(db_project)
+    db.commit()
+    return db_project
+
+
+def get_project_field_definitions(db: Session, domain_id: int):
+    return (
+        db.query(models.ProjectFieldDefinition)
+        .filter(
+            (models.ProjectFieldDefinition.domain_id.is_(None)) |
+            (models.ProjectFieldDefinition.domain_id == domain_id)
+        )
+        .order_by(models.ProjectFieldDefinition.name.asc())
+        .all()
+    )
+
+
+def get_project_field(db: Session, field_id: int):
+    return db.query(models.ProjectField).filter(models.ProjectField.id == field_id).first()
+
+
+def create_project_field(db: Session, project_field: schemas.ProjectFieldCreate):
+    db_field = models.ProjectField(**project_field.dict())
+    db.add(db_field)
+    db.commit()
+    db.refresh(db_field)
+    return db_field
+
+
+def update_project_field(db: Session, field_id: int, field_update: schemas.ProjectFieldUpdate):
+    db_field = get_project_field(db, field_id)
+    if not db_field:
+        raise HTTPException(status_code=404, detail="Project field not found")
+
+    update_data = field_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_field, key, value)
+
+    db.commit()
+    db.refresh(db_field)
+    return db_field
+
+
+def delete_project_field(db: Session, field_id: int):
+    db_field = get_project_field(db, field_id)
+    if not db_field:
+        raise HTTPException(status_code=404, detail="Project field not found")
+
+    db.delete(db_field)
+    db.commit()
+    return db_field
+
+
 # MEDIA
 def create_media(db: Session, media: schemas.MediaCreate):
     # Ensure title is provided since it's required in the database
@@ -204,6 +304,9 @@ def get_media_by_section_and_user(db, section_id, user_id):
 def get_media_by_domain(db: Session, domain_id: int):
     return db.query(models.Media).filter(models.Media.domain_id == domain_id).all()
 
+def get_media_by_project(db: Session, project_id: int):
+    return db.query(models.Media).filter(models.Media.project_id == project_id).all()
+
 def get_all_media_by_domain(db: Session, domain_id: int):
     return db.query(
         models.Media.id,
@@ -212,6 +315,7 @@ def get_all_media_by_domain(db: Session, domain_id: int):
         models.Media.type,
         models.Media.domain_id,
         models.Media.section_id,
+        models.Media.project_id,
         models.Media.text
     ).filter(models.Media.domain_id == domain_id).all()
 def delete_media(db: Session, media_id: int):
@@ -233,7 +337,7 @@ def delete_media(db: Session, media_id: int):
     db.commit()
     return media_item
 
-def update_media(db: Session, media_id: int, title: str, text: str, section_id: int):
+def update_media(db: Session, media_id: int, title: str, text: str, section_id: int, project_id: int | None):
     """
     Update the title and text (alt text) of a media item.
     Args:
@@ -252,6 +356,7 @@ def update_media(db: Session, media_id: int, title: str, text: str, section_id: 
     media_item.title = title
     media_item.text = text
     media_item.section_id = section_id
+    media_item.project_id = project_id
     db.commit()
     db.refresh(media_item)
     return media_item

@@ -33,6 +33,8 @@ export function Header() {
       if (!response.ok) {
         console.error("Failed to log out")
       } else {
+        // Clear domain data from localStorage
+        localStorage.removeItem("selectedDomain")
         setShowTransition(true)
       }
     } catch (error) {

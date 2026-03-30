@@ -11,6 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import os
 from fastapi.staticfiles import StaticFiles
+import io
+from PIL import Image
 
 app = FastAPI()
 UPLOAD_DIR = "./uploads"
@@ -190,6 +192,179 @@ def get_my_pages(
     return crud.get_pages_by_user_id(db, current_user.id)
 
 
+# -- PROJECTS --
+@app.post("/api/projects/", response_model=schemas.ProjectRead)
+def create_project(
+    project: schemas.ProjectCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    domain = crud.get_domain(db, project.domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to create projects for this domain")
+    return crud.create_project(db, project)
+
+
+@app.get("/api/projects/", response_model=List[schemas.ProjectRead])
+def get_my_projects(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    domain = crud.get_domains_by_user_id(db, current_user.id)
+    if not domain:
+        return []
+    return crud.get_projects_by_domain(db, domain.id)
+
+
+@app.get("/api/projects/domain/{domain_id}", response_model=List[schemas.ProjectRead])
+def get_projects_by_domain(
+    domain_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    domain = crud.get_domain(db, domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to view projects for this domain")
+    return crud.get_projects_by_domain(db, domain_id)
+
+
+@app.get("/api/domains/{domain_id}/projects", response_model=List[schemas.ProjectRead])
+def get_domain_projects(
+    domain_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    domain = crud.get_domain(db, domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to view projects for this domain")
+    return crud.get_projects_by_domain(db, domain_id)
+
+
+@app.get("/api/projects/{project_id}", response_model=schemas.ProjectRead)
+def get_project_by_id(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    project = crud.get_project(db, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    domain = crud.get_domain(db, project.domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to view this project")
+
+    return project
+
+
+@app.put("/api/projects/{project_id}", response_model=schemas.ProjectRead)
+def update_project(
+    project_id: int,
+    project_update: schemas.ProjectUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    project = crud.get_project(db, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    domain = crud.get_domain(db, project.domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to update this project")
+
+    return crud.update_project(db, project_id, project_update)
+
+
+@app.delete("/api/projects/{project_id}", response_model=dict)
+def delete_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    project = crud.get_project(db, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    domain = crud.get_domain(db, project.domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to delete this project")
+
+    crud.delete_project(db, project_id)
+    return {"message": f"Project with ID {project_id} has been deleted successfully"}
+
+
+@app.get("/api/project-field-definitions", response_model=List[schemas.ProjectFieldDefinitionRead])
+def get_project_field_definitions(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    domain = crud.get_domains_by_user_id(db, current_user.id)
+    if not domain:
+        return []
+    return crud.get_project_field_definitions(db, domain.id)
+
+
+@app.post("/api/project-fields", response_model=schemas.ProjectFieldRead)
+def create_project_field(
+    project_field: schemas.ProjectFieldCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    project = crud.get_project(db, project_field.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    domain = crud.get_domain(db, project.domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to add fields to this project")
+
+    return crud.create_project_field(db, project_field)
+
+
+@app.put("/api/project-fields/{field_id}", response_model=schemas.ProjectFieldRead)
+def update_project_field(
+    field_id: int,
+    field_update: schemas.ProjectFieldUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    db_field = crud.get_project_field(db, field_id)
+    if not db_field:
+        raise HTTPException(status_code=404, detail="Project field not found")
+
+    project = crud.get_project(db, db_field.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    domain = crud.get_domain(db, project.domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to update fields for this project")
+
+    return crud.update_project_field(db, field_id, field_update)
+
+
+@app.delete("/api/project-fields/{field_id}", response_model=dict)
+def delete_project_field(
+    field_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    db_field = crud.get_project_field(db, field_id)
+    if not db_field:
+        raise HTTPException(status_code=404, detail="Project field not found")
+
+    project = crud.get_project(db, db_field.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    domain = crud.get_domain(db, project.domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to delete fields for this project")
+
+    crud.delete_project_field(db, field_id)
+    return {"message": f"Project field with ID {field_id} deleted successfully"}
+
+
 # -- SECTIONS --
 @app.post("/api/pages/{page_id}/sections/", response_model=schemas.SectionRead)
 def create_section(page_id: int, section: schemas.SectionCreate, db: Session = Depends(get_db)):
@@ -221,6 +396,14 @@ def get_domains_by_user_id(user_id: int, db: Session = Depends(get_db)):
     domains = crud.get_domains_by_user_id(db, user_id)
     if not domains:
         raise HTTPException(status_code=404, detail="No domains found for this user.")
+    return domains
+
+
+@app.get("/api/users/{user_id}/domains", response_model=List[schemas.DomainRead])
+def get_all_domains_by_user_id(user_id: int, db: Session = Depends(get_db)):
+    domains = crud.get_all_domains_by_user_id(db, user_id)
+    if not domains:
+        return []
     return domains
 
 
@@ -292,52 +475,72 @@ def get_media_by_section_id(
     return crud.get_media_by_section_and_user(db, section_id, current_user.id)
 
 
+@app.get("/api/media/project/{project_id}", response_model=List[schemas.MediaRead])
+def get_media_by_project_id(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    project = crud.get_project(db, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    domain = crud.get_domain(db, project.domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to view media for this project")
+
+    return crud.get_media_by_project(db, project_id)
+
+
 @app.post("/api/upload", response_model=schemas.MediaRead)
 async def upload_file(
     file: UploadFile = File(...),
-    domain_id: int = None,  # Added domain_id parameter
+    domain_id: int = None,
     section_id: int = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    MAX_FILE_SIZE_MB = 20  # Maximum file size in MB
-
-    # Read file contents
+    MAX_FILE_SIZE_MB = 20
     contents = await file.read()
 
-    # Check file size
     if len(contents) > MAX_FILE_SIZE_MB * 1024 * 1024:
         raise HTTPException(status_code=413, detail="File too large")
-    # Get the domain for the current user
+
     domain = crud.get_domains_by_user_id(db, current_user.id)
     if not domain:
         raise HTTPException(status_code=404, detail="Domain not found for the current user")
 
     UPLOAD_DIR = "./uploads/" + str(current_user.id) + str(domain.name)
-    # Ensure the upload directory exists
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
 
-    # Save the file to the server
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as buffer:
         buffer.write(contents)
 
+    # Calculate aspect ratio if the file is an image
+    is_image = file.content_type.startswith("image/")
+    aspect_ratio = None
+    if is_image:
+        try:
+            image = Image.open(io.BytesIO(contents))
+            width, height = image.size
+            aspect_ratio = round(height / width, 4)
+        except Exception:
+            aspect_ratio = None
 
-    # Prepare metadata for the database
     media_data = schemas.MediaCreate(
         title=file.filename,
         file_url=f"/uploads/{current_user.id}{domain.name}/{file.filename}",
-        type="image" if file.content_type.startswith("image/") else "text",
-        domain_id=domain.id,  # Extract the ID from the Domain object
+        type="image" if is_image else "text",
+        domain_id=domain.id,
         uploaded_by=current_user.id,
         section_id=section_id,
-        text=""
+        text="",
+        aspect_ratio=aspect_ratio  # Will be None for non-images
     )
-    
-    # Save metadata to the database
-    db_media = crud.create_media(db, media_data)
 
+    db_media = crud.create_media(db, media_data)
     return db_media
 
 @app.delete("/api/media/{media_id}", response_model=dict)
@@ -383,7 +586,12 @@ def update_media(
         schemas.MediaRead: The updated media item.
     """
     updated_media = crud.update_media(
-        db, media_id, update_data.title, update_data.text, update_data.section_id
+        db,
+        media_id,
+        update_data.title,
+        update_data.text,
+        update_data.section_id,
+        update_data.project_id,
     )
 
     return updated_media
@@ -404,6 +612,23 @@ def fill_gallery(domain_id: str, db: Session = Depends(get_db)):
     if not media_items:
         raise HTTPException(status_code=404, detail="No media found for the domain")
 
-    # Filter only images
-    images = [item for item in media_items if item.type == "image"]
-    return images
+    image_extensions = (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg", ".avif")
+    video_extensions = (".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v")
+
+    # Keep only media not linked to projects and include photos/videos.
+    gallery_items = []
+    for item in media_items:
+        if item.project_id is not None:
+            continue
+
+        file_url = (item.file_url or "").lower()
+        is_image = item.type == "image" or file_url.endswith(image_extensions)
+        is_video = file_url.endswith(video_extensions)
+
+        if is_image or is_video:
+            gallery_items.append(item)
+
+    if not gallery_items:
+        raise HTTPException(status_code=404, detail="No gallery media found for this domain")
+
+    return gallery_items

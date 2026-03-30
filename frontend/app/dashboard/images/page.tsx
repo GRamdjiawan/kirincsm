@@ -12,6 +12,8 @@ import {
   Search,
   Grid3X3,
   List,
+  CheckSquare,
+  Square,
   Trash2,
   Eye,
   Plus,
@@ -23,6 +25,7 @@ import {
   X,
 } from "lucide-react"
 import { MediaProvider } from "@/components/media/media-context"
+import { useDomain } from "@/context/DomainContext"
 import Image from "next/image"
 
 interface MediaItem {
@@ -32,11 +35,18 @@ interface MediaItem {
   type: "image" | "video" | "text"
   domain_id: number
   uploaded_by: number
+  project_id?: number | null
   section_id?: number | null
   text?: string | null
 }
 
+interface ProjectOption {
+  id: number
+  title: string
+}
+
 export default function ImagesPage() {
+  const { selectedDomain } = useDomain()
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
   const [filteredItems, setFilteredItems] = useState<MediaItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -48,8 +58,13 @@ export default function ImagesPage() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [projects, setProjects] = useState<ProjectOption[]>([])
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selectedMediaIds, setSelectedMediaIds] = useState<number[]>([])
+  const [bulkProjectId, setBulkProjectId] = useState("")
+  const [isBulkSaving, setIsBulkSaving] = useState(false)
 
-  // Fetch media from API
+  // Fetch media from API - refetch when domain changes
   useEffect(() => {
     const fetchMedia = async () => {
       setIsLoading(true)
@@ -62,7 +77,8 @@ export default function ImagesPage() {
           setMediaItems([])
         } else {
           const data = await response.json()
-          setMediaItems(data.filter((item: MediaItem) => item.type !== "text"))
+          // Filter by selected domain and exclude text items
+          setMediaItems(data.filter((item: MediaItem) => item.domain_id === selectedDomain?.id && item.type !== "text"))
         }
       } catch (error) {
         console.error(error)
@@ -71,8 +87,37 @@ export default function ImagesPage() {
         setIsLoading(false)
       }
     }
-    fetchMedia()
-  }, [])
+    if (selectedDomain?.id) {
+      fetchMedia()
+    }
+  }, [selectedDomain?.id])
+
+  // Fetch projects from current domain for project assignment
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        // Fetch domain projects
+        const response = await fetch(`https://api.kirin-cms.nl/api/domains/${selectedDomain?.id}/projects`, {
+          method: "GET",
+          credentials: "include",
+        })
+        if (!response.ok) {
+          setProjects([])
+          return
+        }
+
+        const data = await response.json()
+        setProjects((data ?? []).map((p: ProjectOption) => ({ id: p.id, title: p.title })))
+      } catch (error) {
+        console.error(error)
+        setProjects([])
+      }
+    }
+
+    if (selectedDomain?.id) {
+      fetchProjects()
+    }
+  }, [selectedDomain?.id])
 
   // Filter and search functionality
   useEffect(() => {
@@ -112,7 +157,64 @@ export default function ImagesPage() {
     }
   }
 
-  const handleUpdate = async (id: number, updatedData: { title: string; text: string }) => {
+  const toggleMediaSelection = (mediaId: number) => {
+    setSelectedMediaIds((prev) =>
+      prev.includes(mediaId) ? prev.filter((id) => id !== mediaId) : [...prev, mediaId],
+    )
+  }
+
+  const handleBulkAssignToProject = async () => {
+    if (selectedMediaIds.length === 0) return
+
+    setIsBulkSaving(true)
+    try {
+      const nextProjectId = bulkProjectId ? Number(bulkProjectId) : null
+
+      for (const mediaId of selectedMediaIds) {
+        const item = mediaItems.find((media) => media.id === mediaId)
+        if (!item) continue
+
+        const response = await fetch(`https://api.kirin-cms.nl/api/media/${mediaId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            title: item.title || item.file_url.split("/").pop() || "Untitled",
+            text: item.text || "",
+            section_id: item.section_id ?? null,
+            project_id: nextProjectId,
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error("Bulk assign backend error:", errorData)
+          throw new Error("Failed bulk assign")
+        }
+      }
+
+      setMediaItems((prev) =>
+        prev.map((item) =>
+          selectedMediaIds.includes(item.id) ? { ...item, project_id: nextProjectId } : item,
+        ),
+      )
+      setSelectedMediaIds([])
+      setSelectionMode(false)
+      setShowSuccessPopup(true)
+      setTimeout(() => setShowSuccessPopup(false), 3000)
+    } catch (error) {
+      console.error("Error bulk assigning media:", error)
+    } finally {
+      setIsBulkSaving(false)
+    }
+  }
+
+  const handleUpdate = async (
+    id: number,
+    updatedData: { title: string; text: string; project_id: number | null },
+  ) => {
     setIsUpdating(true)
     try {
       const response = await fetch(`https://api.kirin-cms.nl/api/media/${id}`, {
@@ -194,8 +296,56 @@ export default function ImagesPage() {
                   <span className="hidden xs:inline">Upload Media</span>
                   <span className="xs:hidden">Upload</span>
                 </Button>
+                <Button
+                  variant={selectionMode ? "default" : "outline"}
+                  onClick={() => {
+                    setSelectionMode((prev) => !prev)
+                    setSelectedMediaIds([])
+                    setBulkProjectId("")
+                  }}
+                  className="rounded-xl"
+                >
+                  {selectionMode ? <CheckSquare className="h-4 w-4 mr-2" /> : <Square className="h-4 w-4 mr-2" />}
+                  Select
+                </Button>
               </div>
             </div>
+
+            {selectionMode && (
+              <Card className="bg-white/5 border-white/10">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                    <div className="text-sm text-gray-300 min-w-[140px]">
+                      {selectedMediaIds.length} selected
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-400 block mb-1">Assign to project</label>
+                      <select
+                        value={bulkProjectId}
+                        onChange={(e) => setBulkProjectId(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl h-10 px-3 text-sm text-white"
+                      >
+                        <option value="" className="bg-gray-900">
+                          None
+                        </option>
+                        {projects.map((project) => (
+                          <option key={project.id} value={project.id} className="bg-gray-900">
+                            {project.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <Button
+                      onClick={handleBulkAssignToProject}
+                      disabled={selectedMediaIds.length === 0 || isBulkSaving}
+                      className="bg-gradient-to-r from-neon-blue to-neon-purple rounded-xl"
+                    >
+                      {isBulkSaving ? "Saving..." : "Apply to selection"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Mobile Upload Section */}
             {showUpload && (
@@ -358,8 +508,16 @@ export default function ImagesPage() {
                   {filteredItems.map((item) => (
                     <Card
                       key={item.id}
-                      className="group cursor-pointer transition-all duration-200 bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] active:scale-[0.98]"
-                      onClick={() => setSelectedItem(item)}
+                      className={`group cursor-pointer transition-all duration-200 bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] active:scale-[0.98] ${
+                        selectionMode && selectedMediaIds.includes(item.id) ? "ring-2 ring-neon-blue" : ""
+                      }`}
+                      onClick={() => {
+                        if (selectionMode) {
+                          toggleMediaSelection(item.id)
+                        } else {
+                          setSelectedItem(item)
+                        }
+                      }}
                     >
                       <CardContent className="p-0">
                         <div className="relative aspect-square overflow-hidden rounded-t-xl">
@@ -382,6 +540,26 @@ export default function ImagesPage() {
                               {item.type}
                             </Badge>
                           </div>
+
+                          {selectionMode && (
+                            <div className="absolute top-2 right-2">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="h-7 w-7 p-0 rounded-lg"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  toggleMediaSelection(item.id)
+                                }}
+                              >
+                                {selectedMediaIds.includes(item.id) ? (
+                                  <CheckSquare className="h-4 w-4" />
+                                ) : (
+                                  <Square className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
+                          )}
 
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                             <div className="flex items-center gap-2">
@@ -408,9 +586,26 @@ export default function ImagesPage() {
                       {filteredItems.map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-white/5 cursor-pointer transition-colors active:bg-white/10"
-                          onClick={() => setSelectedItem(item)}
+                          className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-white/5 cursor-pointer transition-colors active:bg-white/10 ${
+                            selectionMode && selectedMediaIds.includes(item.id) ? "bg-white/10" : ""
+                          }`}
+                          onClick={() => {
+                            if (selectionMode) {
+                              toggleMediaSelection(item.id)
+                            } else {
+                              setSelectedItem(item)
+                            }
+                          }}
                         >
+                          {selectionMode && (
+                            <div className="flex-shrink-0 text-gray-300">
+                              {selectedMediaIds.includes(item.id) ? (
+                                <CheckSquare className="h-4 w-4" />
+                              ) : (
+                                <Square className="h-4 w-4" />
+                              )}
+                            </div>
+                          )}
                           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0">
                             {item.type === "image" ? (
                               <Image
@@ -505,7 +700,7 @@ export default function ImagesPage() {
                       {selectedItem.type === "image" ? (
                         <div className="relative w-full h-full">
                           <Image
-                            src={`https://api.kirin-cms.nl${selectedItem.file_url}`}
+                            src={`https://api.kirin-cms.nl/${selectedItem.file_url}`}
                             alt={selectedItem.text || selectedItem.title || selectedItem.file_url}
                             fill
                             className="object-contain"
@@ -543,6 +738,33 @@ export default function ImagesPage() {
                         />
                       </div>
 
+                      <div>
+                        <h4 className="text-sm font-medium text-white mb-2">Project</h4>
+                        <select
+                          value={selectedItem.project_id ?? ""}
+                          onChange={(e) =>
+                            setSelectedItem((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    project_id: e.target.value ? Number(e.target.value) : null,
+                                  }
+                                : null,
+                            )
+                          }
+                          className="w-full bg-white/5 border border-white/10 focus-visible:ring-neon-blue rounded-xl h-10 px-3 text-sm text-white"
+                        >
+                          <option value="" className="bg-gray-900">
+                            None
+                          </option>
+                          {projects.map((project) => (
+                            <option key={project.id} value={project.id} className="bg-gray-900">
+                              {project.title}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
                       <div className="flex-1"></div>
 
                       {/* Action Buttons */}
@@ -553,6 +775,7 @@ export default function ImagesPage() {
                             handleUpdate(selectedItem.id, {
                               title: selectedItem.title || "",
                               text: selectedItem.text || "",
+                              project_id: selectedItem.project_id ?? null,
                             })
                           }
                           disabled={isUpdating}

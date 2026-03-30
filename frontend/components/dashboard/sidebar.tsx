@@ -10,19 +10,19 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { LayoutDashboard, FileText, ImageIcon, Users, User, Globe, ChevronDown, Check, LogOut } from "lucide-react"
+import { LayoutDashboard, FileText, ImageIcon, Users, User, Globe, ChevronDown, Check, LogOut, FolderClosed } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/context/AuthContext"
+import { useDomain } from "../../context/DomainContext"
 import { LoadingScreen } from "@/components/ui/LoadingScreen"
 
-const defaultAdminSites = [
-  { name: "Main Website", url: "main-website.com", id: "site1" },
-  { name: "Blog", url: "blog.example.com", id: "site2" },
-  { name: "E-commerce Store", url: "store.example.com", id: "site3" },
-  { name: "Landing Page", url: "landing.example.com", id: "site4" },
-]
+interface Domain {
+  id: number
+  name: string
+  url: string
+}
 
 interface SidebarProps {
   onClose?: () => void
@@ -32,50 +32,58 @@ export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, setUser, loading } = useAuth()
+  const { selectedDomain, setSelectedDomain, domains, setDomains, domainsLoading } = useDomain()
   const isAdmin = user?.role === "admin"
 
-  const [adminSitesData, setAdminSitesData] = useState(defaultAdminSites)
-  const [selectedSite, setSelectedSite] = useState(defaultAdminSites[0])
-  const [clientDomain, setClientDomain] = useState()
-  const [state, setState] = useState("media-only")
   const [showTransition, setShowTransition] = useState(false)
 
+  // Fetch domains on mount
   useEffect(() => {
-    if (!user) return
+    if (!user?.id) return
 
     if (isAdmin) {
       fetch("https://api.kirin-cms.nl/api/domains", {
         method: "GET",
         credentials: "include",
       })
-        .then((response) => {
-          if (!response.ok) throw new Error("Network response was not ok")
-          return response.json()
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch domains")
+          return res.json()
         })
         .then((data) => {
-          setAdminSitesData(data)
-          setSelectedSite(data[0])
+          const domainsArray = Array.isArray(data) ? data : [data]
+          setDomains(domainsArray)
+          if (domainsArray.length > 0 && !selectedDomain) {
+            setSelectedDomain(domainsArray[0])
+          }
         })
         .catch((error) => {
           console.error("Error fetching domains:", error)
+          setDomains([])
         })
     } else {
-      fetch(`https://api.kirin-cms.nl/api/domains/${user?.id}`, {
+      // For non-admin users, fetch their domains
+      fetch(`https://api.kirin-cms.nl/api/users/${user.id}/domains`, {
         method: "GET",
         credentials: "include",
       })
-        .then((response) => {
-          if (!response.ok) throw new Error("Network response was not ok")
-          return response.json()
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch domains")
+          return res.json()
         })
         .then((data) => {
-          setClientDomain(data.name)
+          const domainsArray = Array.isArray(data) ? data : []
+          setDomains(domainsArray)
+          if (domainsArray.length > 0 && !selectedDomain) {
+            setSelectedDomain(domainsArray[0])
+          }
         })
         .catch((error) => {
           console.error("Error fetching domains:", error)
+          setDomains([])
         })
     }
-  }, [isAdmin, user])
+  }, [user?.id, isAdmin, setDomains, setSelectedDomain, selectedDomain])
 
   const handleTransitionComplete = () => {
     setUser(null)
@@ -91,6 +99,8 @@ export function Sidebar({ onClose }: SidebarProps) {
       if (!response.ok) {
         console.error("Failed to log out")
       } else {
+        // Clear domain data from localStorage
+        localStorage.removeItem("selectedDomain")
         setShowTransition(true)
       }
     } catch (error) {
@@ -123,23 +133,18 @@ export function Sidebar({ onClose }: SidebarProps) {
       icon: LayoutDashboard,
       href: "/dashboard",
     },
-    ...(clientDomain
+    ...(selectedDomain
       ? [
-          ...(state === "media-only"
-            ? [
-                {
-                  title: "Media",
-                  icon: ImageIcon,
-                  href: "/dashboard/images",
-                },
-              ]
-            : [
-                {
-                  title: "Pages",
-                  icon: FileText,
-                  href: "/dashboard/pages",
-                },
-              ]),
+          {
+            title: "Media",
+            icon: ImageIcon,
+            href: "/dashboard/images",
+          },
+          {
+            title: "Projects",
+            icon: FolderClosed,
+            href: "/dashboard/projects",
+          },
         ]
       : []),
     ...(isAdmin
@@ -204,7 +209,9 @@ export function Sidebar({ onClose }: SidebarProps) {
         {/* Navigation Section */}
         <nav className="space-y-2 flex-shrink-0">
           {sidebarItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+            const isActive = item.href === "/dashboard" 
+              ? pathname === "/dashboard" || pathname === "/dashboard/"
+              : pathname === item.href || pathname.startsWith(`${item.href}/`)
 
             return (
               <Link
@@ -239,70 +246,61 @@ export function Sidebar({ onClose }: SidebarProps) {
             <LogOut className="h-5 w-5 mr-3" />
             Log out
           </Button>
-          {/* Domain/User Info Section */}
-          {isAdmin ? (
+
+          {/* Domain Selector - Show if multiple domains */}
+          {domains && domains.length > 0 && (
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 shadow-lg">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between h-auto p-0 hover:bg-transparent group">
-                    <div className="flex items-center min-w-0 text-left">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 mr-3 flex-shrink-0 group-hover:from-neon-blue/30 group-hover:to-neon-purple/30 transition-all duration-200">
-                        <Globe className="h-5 w-5 text-neon-blue" />
+              {domains.length > 1 ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-between h-auto p-0 hover:bg-transparent group">
+                      <div className="flex items-center min-w-0 text-left">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 mr-3 flex-shrink-0 group-hover:from-neon-blue/30 group-hover:to-neon-purple/30 transition-all duration-200">
+                          <Globe className="h-5 w-5 text-neon-blue" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{selectedDomain?.name}</p>
+                          <p className="text-xs text-gray-400 truncate">{selectedDomain?.url}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-white truncate">{selectedSite?.name}</p>
-                        <p className="text-xs text-gray-400 truncate">{selectedSite?.url}</p>
-                      </div>
-                    </div>
-                    <ChevronDown className="h-4 w-4 ml-2 text-gray-400 flex-shrink-0 group-hover:text-white transition-colors duration-200" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-[300px] backdrop-blur-md bg-black/90 border-white/20 shadow-2xl"
-                >
-                  <DropdownMenuLabel className="text-white">Select Website</DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  {adminSitesData.map((site) => (
-                    <DropdownMenuItem
-                      key={site.id}
-                      className="flex items-center justify-between cursor-pointer hover:bg-white/10 focus:bg-white/10"
-                      onClick={() => setSelectedSite(site)}
-                    >
-                      <div className="flex flex-col min-w-0">
-                        <span className="truncate text-white">{site.name}</span>
-                        <span className="text-xs text-gray-400 truncate">{site.url}</span>
-                      </div>
-                      {selectedSite?.id === site.id && <Check className="h-4 w-4 text-neon-blue flex-shrink-0" />}
-                    </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem className="hover:bg-white/10 focus:bg-white/10">
-                    <span className="text-neon-purple font-medium">+ Add New Website</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          ):(
-
-
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 shadow-lg">
-              <div className="flex items-center min-w-0">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 mr-3 flex-shrink-0">
-                  <User className="h-5 w-5 text-neon-blue" />
+                      <ChevronDown className="h-4 w-4 ml-2 text-gray-400 flex-shrink-0 group-hover:text-white transition-colors duration-200" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-[300px] backdrop-blur-md bg-black/90 border-white/20 shadow-2xl"
+                  >
+                    <DropdownMenuLabel className="text-white">Select Domain</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/10" />
+                    {domains.map((domain: Domain) => (
+                      <DropdownMenuItem
+                        key={domain.id}
+                        className="flex items-center justify-between cursor-pointer hover:bg-white/10 focus:bg-white/10"
+                        onClick={() => setSelectedDomain(domain)}
+                      >
+                        <div className="flex flex-col min-w-0">
+                          <span className="truncate text-white">{domain.name}</span>
+                          <span className="text-xs text-gray-400 truncate">{domain.url}</span>
+                        </div>
+                        {selectedDomain?.id === domain.id && <Check className="h-4 w-4 text-neon-blue flex-shrink-0" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                // Single domain - just display it
+                <div className="flex items-center min-w-0">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 mr-3 flex-shrink-0">
+                    <Globe className="h-5 w-5 text-neon-blue" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{selectedDomain?.name}</p>
+                    <p className="text-xs text-gray-400 truncate">{selectedDomain?.url}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{user?.name || "User"}</p>
-                  <p className="text-xs text-gray-400 truncate">{clientDomain || "example.com"}</p>
-                </div>
-              </div>
+              )}
             </div>
-            
           )}
-
-
-          {/* Logout Button - Positioned for easy thumb access */}
-          
         </div>
 
       </div>
