@@ -399,6 +399,14 @@ def get_domains_by_user_id(user_id: int, db: Session = Depends(get_db)):
     return domains
 
 
+@app.get("/api/users/{user_id}/domains", response_model=List[schemas.DomainRead])
+def get_all_domains_by_user_id(user_id: int, db: Session = Depends(get_db)):
+    domains = crud.get_all_domains_by_user_id(db, user_id)
+    if not domains:
+        return []
+    return domains
+
+
 @app.get("/api/domains", response_model=List[schemas.DomainRead])
 def get_all_domains(db: Session = Depends(get_db)):
     domains = crud.get_domains(db)

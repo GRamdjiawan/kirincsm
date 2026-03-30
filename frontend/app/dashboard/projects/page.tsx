@@ -17,6 +17,7 @@ import {
   ChevronDown,
   X,
 } from "lucide-react"
+import { useDomain } from "@/context/DomainContext"
 
 interface FieldDefinition {
   id: number
@@ -48,10 +49,10 @@ const emptyForm = { title: "", description: "" }
 const emptyFieldInput = { definitionId: "", value: "" }
 
 export default function ProjectsPage() {
+  const { selectedDomain } = useDomain()
   const [projects, setProjects] = useState<Project[]>([])
   const [filtered, setFiltered] = useState<Project[]>([])
   const [fieldDefinitions, setFieldDefinitions] = useState<FieldDefinition[]>([])
-  const [domainId, setDomainId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [sortAsc, setSortAsc] = useState(true)
   const [isLoading, setIsLoading] = useState(true)
@@ -66,12 +67,12 @@ export default function ProjectsPage() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
 
-  // ── Fetch chain ──────────────────────────────────────────────────────────────
+  // ── Fetch projects for selected domain ────────────────────────────────────────
   useEffect(() => {
-    const fetchProjects = async (domainId: number) => {
+    const fetchProjects = async () => {
       setIsLoading(true)
       try {
-        const res = await fetch(`https://api.kirin-cms.nl/api/domains/${domainId}/projects`, {
+        const res = await fetch(`https://api.kirin-cms.nl/api/domains/${selectedDomain?.id}/projects`, {
           method: "GET",
           credentials: "include",
         })
@@ -89,38 +90,10 @@ export default function ProjectsPage() {
       }
     }
 
-    const fetchDomainId = async (userId: number) => {
-      try {
-        const res = await fetch(`https://api.kirin-cms.nl/api/domains/${userId}`, {
-          method: "GET",
-          credentials: "include",
-        })
-        if (!res.ok) throw new Error("Failed to fetch domain")
-        const data = await res.json()
-        setDomainId(data.id)
-        fetchProjects(data.id)
-      } catch (err) {
-        console.error(err)
-      }
+    if (selectedDomain?.id) {
+      fetchProjects()
     }
-
-    const fetchUserId = async () => {
-      try {
-        const res = await fetch("https://api.kirin-cms.nl/api/me", {
-          method: "GET",
-          credentials: "include",
-        })
-        if (res.ok) {
-          const data = await res.json()
-          fetchDomainId(data.id)
-        }
-      } catch (err) {
-        console.error(err)
-      }
-    }
-
-    fetchUserId()
-  }, [])
+  }, [selectedDomain?.id])
 
   // Fetch field definitions once
   useEffect(() => {
@@ -221,7 +194,7 @@ export default function ProjectsPage() {
 
   // ── Save ─────────────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    if (!formData.title.trim() || !domainId) return
+    if (!formData.title.trim() || !selectedDomain?.id) return
     setIsSaving(true)
     try {
       let projectId: number
@@ -240,7 +213,7 @@ export default function ProjectsPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ ...formData, domain_id: domainId }),
+          body: JSON.stringify({ ...formData, domain_id: selectedDomain.id }),
         })
         if (!res.ok) throw new Error("Create failed")
         const created = await res.json()

@@ -8,10 +8,16 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LoadingScreen } from "@/components/ui/LoadingScreen"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { Camera, Key, Bell, Shield, Save, User, Globe } from "lucide-react"
+import { Camera, Key, Bell, Shield, Save, User, Globe, Link as LinkIcon } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/context/AuthContext"
+
+interface Domain {
+  id: number
+  name: string
+  url: string
+}
 
 
 export default function ProfilePage() {
@@ -28,6 +34,8 @@ export default function ProfilePage() {
   const [showTransition, setShowTransition] = useState(false)
   const [passwordError, setPasswordError] = useState("")
   const [role, setRole] = useState("")
+  const [domains, setDomains] = useState<Domain[]>([])
+  const [domainsLoading, setDomainsLoading] = useState(false)
 
 
   useEffect(() => {
@@ -54,6 +62,29 @@ export default function ProfilePage() {
 
 
   }, [user])
+
+  // Fetch domains for the current user
+  useEffect(() => {
+    if (!user?.id) return
+
+    setDomainsLoading(true)
+    fetch(`https://api.kirin-cms.nl/api/users/${user.id}/domains`, {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch domains")
+        return res.json()
+      })
+      .then((data) => {
+        setDomains(Array.isArray(data) ? data : [])
+      })
+      .catch((error) => {
+        console.error("Error fetching domains:", error)
+        setDomains([])
+      })
+      .finally(() => setDomainsLoading(false))
+  }, [user?.id])
 
   const handleChangePassword = async () => {
     setPasswordError("") // reset error on new attempt
@@ -102,6 +133,8 @@ export default function ProfilePage() {
           if (!response.ok) {
             console.error("Failed to log out")
           } else {
+            // Clear domain data from localStorage
+            localStorage.removeItem("selectedDomain")
             setShowTransition(true)
           }
         } catch (error) {
@@ -221,7 +254,7 @@ export default function ProfilePage() {
         {/* Profile tabs */}
         <Card className="backdrop-blur-md bg-white/5 border-white/10 shadow-lg rounded-xl overflow-hidden md:col-span-2">
           <Tabs defaultValue="personal" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-white/5 rounded-t-xl">
+            <TabsList className="grid w-full grid-cols-3 bg-white/5 rounded-t-xl">
               <TabsTrigger value="personal" className="rounded-xl">
                 <User className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Personal</span>
@@ -231,6 +264,11 @@ export default function ProfilePage() {
                 <Shield className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Security</span>
                 <span className="sm:hidden">Security</span>
+              </TabsTrigger>
+              <TabsTrigger value="domains" className="rounded-xl">
+                <Globe className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Domains</span>
+                <span className="sm:hidden">Domains</span>
               </TabsTrigger>
               {/* <TabsTrigger value="notifications" className="rounded-xl">
                 <Bell className="h-4 w-4 mr-2" />
@@ -348,6 +386,54 @@ export default function ProfilePage() {
                 </div>
                 <Switch />
               </div> */}
+            </TabsContent>
+
+            {/* Domains Tab */}
+            <TabsContent value="domains" className="p-4 md:p-6 space-y-6">
+              <CardHeader className="p-0">
+                <CardTitle>Your Domains</CardTitle>
+                <CardDescription>Manage your website domains</CardDescription>
+              </CardHeader>
+
+              {domainsLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <div key={i} className="h-20 rounded-xl bg-white/5 animate-pulse" />
+                  ))}
+                </div>
+              ) : domains.length === 0 ? (
+                <Card className="bg-white/5 border-white/10 border-dashed">
+                  <CardContent className="p-10 text-center">
+                    <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-400 text-sm">No domains found</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {domains.map((domain) => (
+                    <Card key={domain.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-colors">
+                      <CardContent className="p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-neon-blue/20 to-neon-purple/20">
+                            <LinkIcon className="h-5 w-5 text-neon-blue" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-white">{domain.name}</h3>
+                            <p className="text-xs text-gray-400">{domain.url}</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          className="text-neon-blue hover:bg-white/10 rounded-lg"
+                          onClick={() => window.open(`https://${domain.url}`, "_blank")}
+                        >
+                          Visit
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             

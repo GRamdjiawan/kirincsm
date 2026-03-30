@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react"
 import { MediaProvider } from "@/components/media/media-context"
+import { useDomain } from "@/context/DomainContext"
 import Image from "next/image"
 
 interface MediaItem {
@@ -45,6 +46,7 @@ interface ProjectOption {
 }
 
 export default function ImagesPage() {
+  const { selectedDomain } = useDomain()
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
   const [filteredItems, setFilteredItems] = useState<MediaItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -62,7 +64,7 @@ export default function ImagesPage() {
   const [bulkProjectId, setBulkProjectId] = useState("")
   const [isBulkSaving, setIsBulkSaving] = useState(false)
 
-  // Fetch media from API
+  // Fetch media from API - refetch when domain changes
   useEffect(() => {
     const fetchMedia = async () => {
       setIsLoading(true)
@@ -75,7 +77,8 @@ export default function ImagesPage() {
           setMediaItems([])
         } else {
           const data = await response.json()
-          setMediaItems(data.filter((item: MediaItem) => item.type !== "text"))
+          // Filter by selected domain and exclude text items
+          setMediaItems(data.filter((item: MediaItem) => item.domain_id === selectedDomain?.id && item.type !== "text"))
         }
       } catch (error) {
         console.error(error)
@@ -84,14 +87,17 @@ export default function ImagesPage() {
         setIsLoading(false)
       }
     }
-    fetchMedia()
-  }, [])
+    if (selectedDomain?.id) {
+      fetchMedia()
+    }
+  }, [selectedDomain?.id])
 
-  // Fetch projects from current user's domain for project assignment
+  // Fetch projects from current domain for project assignment
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch("https://api.kirin-cms.nl/api/projects/", {
+        // Fetch domain projects
+        const response = await fetch(`https://api.kirin-cms.nl/api/domains/${selectedDomain?.id}/projects`, {
           method: "GET",
           credentials: "include",
         })
@@ -108,8 +114,10 @@ export default function ImagesPage() {
       }
     }
 
-    fetchProjects()
-  }, [])
+    if (selectedDomain?.id) {
+      fetchProjects()
+    }
+  }, [selectedDomain?.id])
 
   // Filter and search functionality
   useEffect(() => {
@@ -515,7 +523,7 @@ export default function ImagesPage() {
                         <div className="relative aspect-square overflow-hidden rounded-t-xl">
                           {item.type === "image" ? (
                             <Image
-                              src={`https://localhost:8000${item.file_url}`}
+                              src={`https://api.kirin-cms.nl${item.file_url}`}
                               alt={item.text || item.title || item.file_url}
                               fill
                               className="object-cover transition-transform duration-300 group-hover:scale-110"
