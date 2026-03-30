@@ -13,7 +13,7 @@ export function TextEditor() {
   useEffect(() => {
     if (!selectedSection || selectedSection.type !== "TEXT") return
 
-    fetch(`http://localhost:8000/api/media/${selectedSection.id}`, { credentials: "include" })
+    fetch(`https://api.kirin-cms.nl/api/media/${selectedSection.id}`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => setMedia(Array.isArray(data) ? data : []))
       .catch((err) => {

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Mar 30, 2026 at 03:18 PM
+-- Generation Time: Mar 30, 2026 at 09:27 PM
 -- Server version: 10.11.16-MariaDB
 -- PHP Version: 8.4.19
 
@@ -83,7 +83,8 @@ CREATE TABLE `media` (
 INSERT INTO `media` (`id`, `file_url`, `text`, `domain_id`, `uploaded_by`, `section_id`, `project_id`, `type`, `title`, `aspect_ratio`) VALUES
 (5, NULL, 'GR', 1, 6, 4, NULL, 'text', 'initials', NULL),
 (6, NULL, 'Gianni Ramdjiawan', 1, 6, 4, NULL, 'text', 'title', NULL),
-(26, '/uploads/test.jpg', '', 1, 6, NULL, NULL, 'image', 'test.jpg', NULL);
+(26, '/uploads/test.jpg', '', 1, 6, NULL, 5, 'image', 'test.jpg', NULL),
+(27, '/uploads/6gianni-ramdjiawan.com/Luffy.jpg', '', 1, 6, NULL, 5, 'image', 'Luffy.jpg', 1);
 
 -- --------------------------------------------------------
 
@@ -122,6 +123,69 @@ CREATE TABLE `projects` (
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `projects`
+--
+
+INSERT INTO `projects` (`id`, `domain_id`, `title`, `description`, `created_at`, `updated_at`) VALUES
+(5, 1, 'Project Nike', 'Test project', '2026-03-30 22:19:48', '2026-03-30 22:19:48'),
+(6, 1, 'Smiles for serve', 'Padel and networking event', '2026-03-30 22:49:50', '2026-03-30 22:49:50');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `project_fields`
+--
+
+CREATE TABLE `project_fields` (
+  `id` int(11) NOT NULL,
+  `project_id` int(11) NOT NULL,
+  `field_definition_id` int(11) DEFAULT NULL,
+  `field_key` varchar(255) NOT NULL,
+  `field_value` text DEFAULT NULL,
+  `field_type` varchar(50) DEFAULT 'text',
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+--
+-- Dumping data for table `project_fields`
+--
+
+INSERT INTO `project_fields` (`id`, `project_id`, `field_definition_id`, `field_key`, `field_value`, `field_type`, `created_at`, `updated_at`) VALUES
+(4, 5, NULL, 'client_name', 'Nike', 'text', '2026-03-30 22:19:48', '2026-03-30 22:19:48'),
+(5, 5, NULL, 'location', 'Rotterdam', 'text', '2026-03-30 22:19:48', '2026-03-30 22:19:48'),
+(6, 5, NULL, 'size', '120m2', 'text', '2026-03-30 22:19:48', '2026-03-30 22:19:48'),
+(7, 6, 2, 'location', 'Rotterdam', 'text', '2026-03-30 22:49:50', '2026-03-30 22:49:50'),
+(8, 6, 4, 'date', 'June 2026', 'text', '2026-03-30 22:49:50', '2026-03-30 22:49:50');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `project_field_definitions`
+--
+
+CREATE TABLE `project_field_definitions` (
+  `id` int(11) NOT NULL,
+  `domain_id` int(11) DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
+  `key_name` varchar(255) NOT NULL,
+  `field_type` varchar(50) DEFAULT 'text',
+  `is_required` tinyint(1) DEFAULT 0,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+--
+-- Dumping data for table `project_field_definitions`
+--
+
+INSERT INTO `project_field_definitions` (`id`, `domain_id`, `name`, `key_name`, `field_type`, `is_required`, `created_at`, `updated_at`) VALUES
+(1, NULL, 'Client Name', 'client_name', 'text', 0, '2026-03-30 22:16:33', '2026-03-30 22:16:33'),
+(2, NULL, 'Location', 'location', 'text', 0, '2026-03-30 22:16:33', '2026-03-30 22:16:33'),
+(3, NULL, 'Project Size', 'size', 'text', 0, '2026-03-30 22:16:33', '2026-03-30 22:16:33'),
+(4, NULL, 'Date', 'date', 'text', 0, '2026-03-30 22:16:33', '2026-03-30 22:29:29');
 
 -- --------------------------------------------------------
 
@@ -244,6 +308,22 @@ ALTER TABLE `projects`
   ADD KEY `domain_id` (`domain_id`);
 
 --
+-- Indexes for table `project_fields`
+--
+ALTER TABLE `project_fields`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `field_definition_id` (`field_definition_id`),
+  ADD KEY `idx_project_id` (`project_id`),
+  ADD KEY `idx_field_key` (`field_key`);
+
+--
+-- Indexes for table `project_field_definitions`
+--
+ALTER TABLE `project_field_definitions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_key_per_domain` (`domain_id`,`key_name`);
+
+--
 -- Indexes for table `sections`
 --
 ALTER TABLE `sections`
@@ -284,7 +364,7 @@ ALTER TABLE `domains`
 -- AUTO_INCREMENT for table `media`
 --
 ALTER TABLE `media`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `pages`
@@ -296,7 +376,19 @@ ALTER TABLE `pages`
 -- AUTO_INCREMENT for table `projects`
 --
 ALTER TABLE `projects`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `project_fields`
+--
+ALTER TABLE `project_fields`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT for table `project_field_definitions`
+--
+ALTER TABLE `project_field_definitions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `sections`
@@ -352,6 +444,13 @@ ALTER TABLE `pages`
 --
 ALTER TABLE `projects`
   ADD CONSTRAINT `projects_ibfk_1` FOREIGN KEY (`domain_id`) REFERENCES `domains` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `project_fields`
+--
+ALTER TABLE `project_fields`
+  ADD CONSTRAINT `project_fields_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `project_fields_ibfk_2` FOREIGN KEY (`field_definition_id`) REFERENCES `project_field_definitions` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `sections`

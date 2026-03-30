@@ -13,42 +13,65 @@ import {
   CheckCircle,
   FolderOpen,
   Save,
-  X,
   ChevronUp,
   ChevronDown,
+  X,
 } from "lucide-react"
+
+interface FieldDefinition {
+  id: number
+  name: string
+  key_name: string
+  field_type: string
+}
+
+interface ProjectField {
+  id?: number
+  field_key: string
+  field_value: string
+  field_type: string
+  field_definition_id?: number | null
+  // local only — used before saving
+  _tempId?: string
+  _definitionName?: string
+}
 
 interface Project {
   id: number
   title: string
   description: string
   domain_id: number
+  fields?: ProjectField[]
 }
 
-type SortKey = "title"
-
 const emptyForm = { title: "", description: "" }
+const emptyFieldInput = { definitionId: "", value: "" }
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [filtered, setFiltered] = useState<Project[]>([])
+  const [fieldDefinitions, setFieldDefinitions] = useState<FieldDefinition[]>([])
   const [domainId, setDomainId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [sortKey] = useState<SortKey>("title")
   const [sortAsc, setSortAsc] = useState(true)
   const [isLoading, setIsLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editProject, setEditProject] = useState<Project | null>(null)
   const [formData, setFormData] = useState(emptyForm)
+  // Staged fields in the dialog (not yet saved to backend)
+  const [stagedFields, setStagedFields] = useState<ProjectField[]>([])
+  const [removedFieldIds, setRemovedFieldIds] = useState<number[]>([])
+  const [fieldInput, setFieldInput] = useState(emptyFieldInput)
   const [isSaving, setIsSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
 
+  // ── Fetch chain ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchProjects = async (domainId: number) => {
       setIsLoading(true)
       try {
-        const res = await fetch(`http://localhost:8000/api/domains/${domainId}/projects`, {
+        const res = await fetch(`https://api.kirin-cms.nl/api/domains/${domainId}/projects`, {
           method: "GET",
           credentials: "include",
         })
@@ -68,7 +91,7 @@ export default function ProjectsPage() {
 
     const fetchDomainId = async (userId: number) => {
       try {
-        const res = await fetch(`http://localhost:8000/api/domains/${userId}`, {
+        const res = await fetch(`https://api.kirin-cms.nl/api/domains/${userId}`, {
           method: "GET",
           credentials: "include",
         })
@@ -83,7 +106,7 @@ export default function ProjectsPage() {
 
     const fetchUserId = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/me", {
+        const res = await fetch("https://api.kirin-cms.nl/api/me", {
           method: "GET",
           credentials: "include",
         })
@@ -99,7 +122,26 @@ export default function ProjectsPage() {
     fetchUserId()
   }, [])
 
-  // Filter + sort
+  // Fetch field definitions once
+  useEffect(() => {
+    const fetchDefinitions = async () => {
+      try {
+        const res = await fetch("https://api.kirin-cms.nl/api/project-field-definitions", {
+          method: "GET",
+          credentials: "include",
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setFieldDefinitions(data)
+        }
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    fetchDefinitions()
+  }, [])
+
+  // ── Filter + sort ────────────────────────────────────────────────────────────
   useEffect(() => {
     let result = [...projects]
 
@@ -121,34 +163,80 @@ export default function ProjectsPage() {
     setFiltered(result)
   }, [projects, searchQuery, sortAsc])
 
+  // ── Dialog helpers ───────────────────────────────────────────────────────────
   const openCreate = () => {
     setEditProject(null)
     setFormData(emptyForm)
+    setStagedFields([])
+    setRemovedFieldIds([])
+    setFieldInput(emptyFieldInput)
     setShowForm(true)
   }
 
   const openEdit = (project: Project) => {
     setEditProject(project)
     setFormData({ title: project.title, description: project.description })
+    // Map existing fields with their definition name for display
+    const existing: ProjectField[] = (project.fields ?? []).map((f) => ({
+      ...f,
+      _tempId: String(f.id ?? Math.random()),
+      _definitionName:
+        fieldDefinitions.find((d) => d.key_name === f.field_key)?.name ?? f.field_key,
+    }))
+    setStagedFields(existing)
+    setRemovedFieldIds([])
+    setFieldInput(emptyFieldInput)
     setShowForm(true)
   }
 
+  // Add a field to the staged list (not yet saved)
+  const handleAddField = () => {
+    if (!fieldInput.definitionId || !fieldInput.value.trim()) return
+    const def = fieldDefinitions.find((d) => String(d.id) === fieldInput.definitionId)
+    if (!def) return
+
+    setStagedFields((prev) => [
+      ...prev,
+      {
+        field_key: def.key_name,
+        field_value: fieldInput.value.trim(),
+        field_type: def.field_type,
+        field_definition_id: def.id,
+        _tempId: String(Math.random()),
+        _definitionName: def.name,
+      },
+    ])
+    setFieldInput(emptyFieldInput)
+  }
+
+  const handleRemoveStagedField = (tempId: string) => {
+    setStagedFields((prev) => {
+      const fieldToRemove = prev.find((f) => f._tempId === tempId)
+      if (fieldToRemove?.id) {
+        setRemovedFieldIds((ids) => [...ids, fieldToRemove.id as number])
+      }
+      return prev.filter((f) => f._tempId !== tempId)
+    })
+  }
+
+  // ── Save ─────────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!formData.title.trim() || !domainId) return
     setIsSaving(true)
     try {
+      let projectId: number
+
       if (editProject) {
-        const res = await fetch(`http://localhost:8000/api/projects/${editProject.id}`, {
+        const res = await fetch(`https://api.kirin-cms.nl/api/projects/${editProject.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify(formData),
         })
         if (!res.ok) throw new Error("Update failed")
-        const updated = await res.json()
-        setProjects((prev) => prev.map((p) => (p.id === editProject.id ? { ...p, ...updated } : p)))
+        projectId = editProject.id
       } else {
-        const res = await fetch("http://localhost:8000/api/projects", {
+        const res = await fetch("https://api.kirin-cms.nl/api/projects/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -156,9 +244,75 @@ export default function ProjectsPage() {
         })
         if (!res.ok) throw new Error("Create failed")
         const created = await res.json()
-        setProjects((prev) => [created, ...prev])
+        projectId = created.id
       }
+
+      // Delete fields removed in the editor
+      for (const fieldId of removedFieldIds) {
+        const deleteRes = await fetch(`https://api.kirin-cms.nl/api/project-fields/${fieldId}`, {
+          method: "DELETE",
+          credentials: "include",
+        })
+        if (!deleteRes.ok) throw new Error("Field delete failed")
+      }
+
+      // Immediately remove deleted fields from the projects state
+      setProjects((prev) =>
+        prev.map((p) => {
+          if (editProject && p.id === editProject.id) {
+            return {
+              ...p,
+              fields: (p.fields ?? []).filter((f) => !removedFieldIds.includes(f.id!)),
+            }
+          }
+          return p
+        }),
+      )
+
+      // Save staged fields
+      for (const field of stagedFields) {
+        if (field.id) {
+          // Existing field — update
+          const fieldRes = await fetch(`https://api.kirin-cms.nl/api/project-fields/${field.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ field_value: field.field_value }),
+          })
+          if (!fieldRes.ok) throw new Error("Field update failed")
+        } else {
+          // New field — create
+          const fieldRes = await fetch(`https://api.kirin-cms.nl/api/project-fields`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              project_id: projectId,
+              field_key: field.field_key,
+              field_value: field.field_value,
+              field_type: field.field_type,
+              field_definition_id: field.field_definition_id ?? null,
+            }),
+          })
+          if (!fieldRes.ok) throw new Error("Field create failed")
+        }
+      }
+
+      // Refetch this project to get updated fields
+      const refreshed = await fetch(`https://api.kirin-cms.nl/api/projects/${projectId}`, {
+        credentials: "include",
+      })
+      if (refreshed.ok) {
+        const updatedProject = await refreshed.json()
+        setProjects((prev) =>
+          editProject
+            ? prev.map((p) => (p.id === projectId ? updatedProject : p))
+            : [updatedProject, ...prev],
+        )
+      }
+
       setShowForm(false)
+      setRemovedFieldIds([])
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 3000)
     } catch (err) {
@@ -168,9 +322,10 @@ export default function ProjectsPage() {
     }
   }
 
+  // ── Delete ───────────────────────────────────────────────────────────────────
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/projects/${id}`, {
+      const res = await fetch(`https://api.kirin-cms.nl/api/projects/${id}`, {
         method: "DELETE",
         credentials: "include",
       })
@@ -183,6 +338,19 @@ export default function ProjectsPage() {
     }
   }
 
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+  // Collect all unique field keys that appear across visible projects for table headers
+  const allFieldKeys = Array.from(
+    new Set(filtered.flatMap((p) => (p.fields ?? []).map((f) => f.field_key))),
+  )
+
+  const truncateDescription = (desc: string | undefined, maxWords: number = 6): string => {
+    if (!desc) return ""
+    const words = desc.split(" ")
+    if (words.length <= maxWords) return desc
+    return words.slice(0, maxWords).join(" ") + "..."
+  }
+
   const LoadingSkeleton = () => (
     <div className="space-y-3">
       {Array.from({ length: 5 }).map((_, i) => (
@@ -191,6 +359,7 @@ export default function ProjectsPage() {
     </div>
   )
 
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen from-gray-900 via-gray-800 to-gray-900">
       {showSuccess && (
@@ -240,9 +409,7 @@ export default function ProjectsPage() {
               </div>
               <h3 className="text-lg font-medium text-white mb-2">No projects found</h3>
               <p className="text-gray-400 text-sm mb-4">
-                {searchQuery
-                  ? "Try adjusting your search"
-                  : "Create your first project to get started"}
+                {searchQuery ? "Try adjusting your search" : "Create your first project to get started"}
               </p>
               {!searchQuery && (
                 <Button
@@ -273,6 +440,12 @@ export default function ProjectsPage() {
                       )}
                     </th>
                     <th className="text-left px-4 py-3 hidden md:table-cell">Description</th>
+                    {/* Dynamic field columns */}
+                    {allFieldKeys.map((key) => (
+                      <th key={key} className="text-left px-4 py-3 hidden lg:table-cell capitalize whitespace-nowrap">
+                        {fieldDefinitions.find((d) => d.key_name === key)?.name ?? key}
+                      </th>
+                    ))}
                     <th className="text-right px-4 py-3">Actions</th>
                   </tr>
                 </thead>
@@ -283,10 +456,21 @@ export default function ProjectsPage() {
                         <span className="font-medium text-white">{project.title}</span>
                       </td>
                       <td className="px-4 py-3 text-gray-400 hidden md:table-cell max-w-xs truncate">
-                        {project.description || (
+                        {truncateDescription(project.description) || (
                           <span className="text-white/20 italic text-xs">No description</span>
                         )}
                       </td>
+                      {/* Dynamic field values per row */}
+                      {allFieldKeys.map((key) => {
+                        const field = (project.fields ?? []).find((f) => f.field_key === key)
+                        return (
+                          <td key={key} className="px-4 py-3 text-gray-400 hidden lg:table-cell">
+                            {field?.field_value || (
+                              <span className="text-white/20 italic text-xs">—</span>
+                            )}
+                          </td>
+                        )
+                      })}
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <Button
@@ -316,7 +500,7 @@ export default function ProjectsPage() {
         )}
       </div>
 
-      {/* Create / Edit Dialog */}
+      {/* ── Create / Edit Dialog ── */}
       <Dialog open={showForm} onOpenChange={(o) => { if (!o) setShowForm(false) }}>
         <DialogContent className="max-w-lg backdrop-blur-md bg-black/90 border-white/10">
           <DialogHeader>
@@ -326,6 +510,7 @@ export default function ProjectsPage() {
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
+            {/* Title */}
             <div>
               <label className="text-sm font-medium text-white mb-1.5 block">Title *</label>
               <Input
@@ -336,6 +521,7 @@ export default function ProjectsPage() {
               />
             </div>
 
+            {/* Description */}
             <div>
               <label className="text-sm font-medium text-white mb-1.5 block">Description</label>
               <Input
@@ -346,31 +532,94 @@ export default function ProjectsPage() {
               />
             </div>
 
-            <div className="flex gap-2 pt-2">
-              <Button
-                className="flex-1 bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-blue/80 hover:to-neon-purple/80 rounded-xl"
-                onClick={handleSave}
-                disabled={isSaving || !formData.title.trim()}
-              >
-                {isSaving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    {editProject ? "Save Changes" : "Create Project"}
-                  </>
-                )}
-              </Button>
+            {/* Dynamic field input row */}
+            <div>
+              <label className="text-sm font-medium text-white mb-1.5 block">Add Field</label>
+              <div className="flex gap-2">
+                <select
+                  value={fieldInput.definitionId}
+                  onChange={(e) => setFieldInput((p) => ({ ...p, definitionId: e.target.value }))}
+                  className="flex-shrink-0 w-40 bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-neon-blue"
+                >
+                  <option value="" disabled className="bg-gray-900">
+                    Select field...
+                  </option>
+                  {fieldDefinitions.map((def) => (
+                    <option key={def.id} value={String(def.id)} className="bg-gray-900">
+                      {def.name}
+                    </option>
+                  ))}
+                </select>
 
+                <Input
+                  value={fieldInput.value}
+                  onChange={(e) => setFieldInput((p) => ({ ...p, value: e.target.value }))}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddField()}
+                  placeholder="Value..."
+                  className="flex-1 bg-white/5 border-white/10 focus-visible:ring-neon-blue rounded-xl"
+                />
+
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleAddField}
+                  disabled={!fieldInput.definitionId || !fieldInput.value.trim()}
+                  className="h-10 px-3 flex-shrink-0 bg-gradient-to-r from-neon-blue to-neon-purple rounded-xl disabled:opacity-30"
+                >
+                  Confirm
+                </Button>
+              </div>
             </div>
+
+            {/* Staged fields list */}
+            {stagedFields.length > 0 && (
+              <div className="rounded-xl border border-white/10 overflow-hidden">
+                {stagedFields.map((field) => (
+                  <div
+                    key={field._tempId}
+                    className="flex items-center justify-between px-3 py-2.5 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xs text-gray-400 bg-white/5 px-2 py-1 rounded-lg whitespace-nowrap flex-shrink-0">
+                        {field._definitionName ?? field.field_key}
+                      </span>
+                      <span className="text-sm text-white truncate">{field.field_value}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveStagedField(field._tempId!)}
+                      className="ml-2 flex-shrink-0 text-gray-500 hover:text-red-400 transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Save button */}
+            <Button
+              className="w-full bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-blue/80 hover:to-neon-purple/80 rounded-xl"
+              onClick={handleSave}
+              disabled={isSaving || !formData.title.trim()}
+            >
+              {isSaving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  {editProject ? "Save Changes" : "Create Project"}
+                </>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirm Dialog */}
+      {/* ── Delete Confirm Dialog ── */}
       <Dialog open={deleteConfirm !== null} onOpenChange={() => setDeleteConfirm(null)}>
         <DialogContent className="max-w-sm backdrop-blur-md bg-black/90 border-white/10 [&>button:last-child]:hidden">
           <DialogHeader>

@@ -80,7 +80,7 @@ export function MediaSelector({
           console.log(item);
           
           const updatedItem = { ...item, section_id: selectedSection } // Update section_id
-          const response = await fetch(`http://localhost:8000/api/media/${item.id}`, {
+          const response = await fetch(`https://api.kirin-cms.nl/api/media/${item.id}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",

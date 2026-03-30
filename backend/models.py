@@ -20,6 +20,7 @@ class Domain(Base):
     pages = relationship("Page", back_populates="domain")
     media_items = relationship("Media", back_populates="domain")
     projects = relationship("Project", back_populates="domain")
+    project_field_definitions = relationship("ProjectFieldDefinition", back_populates="domain")
 
 class Page(Base):
     __tablename__ = 'pages'
@@ -66,6 +67,32 @@ class Project(Base):
 
     domain = relationship("Domain", back_populates="projects")
     media_items = relationship("Media", back_populates="project")
+    fields = relationship("ProjectField", back_populates="project", cascade="all, delete-orphan")
+
+
+class ProjectFieldDefinition(Base):
+    __tablename__ = 'project_field_definitions'
+    id = Column(Integer, primary_key=True)
+    domain_id = Column(Integer, ForeignKey('domains.id'), nullable=True)
+    name = Column(String(255), nullable=False)
+    key_name = Column(String(255), nullable=False)
+    field_type = Column(String(50), default='text')
+
+    domain = relationship("Domain", back_populates="project_field_definitions")
+    project_fields = relationship("ProjectField", back_populates="field_definition")
+
+
+class ProjectField(Base):
+    __tablename__ = 'project_fields'
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey('projects.id'), nullable=False)
+    field_definition_id = Column(Integer, ForeignKey('project_field_definitions.id'), nullable=True)
+    field_key = Column(String(255), nullable=False)
+    field_value = Column(Text, nullable=True)
+    field_type = Column(String(50), default='text')
+
+    project = relationship("Project", back_populates="fields")
+    field_definition = relationship("ProjectFieldDefinition", back_populates="project_fields")
 
 class SEO(Base):
     __tablename__ = 'seo'

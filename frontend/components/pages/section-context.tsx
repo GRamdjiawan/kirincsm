@@ -104,7 +104,7 @@ export function SectionProvider({ children }: { children: React.ReactNode }) {
       setSections({})
       return
     }
-    fetch(`http://localhost:8000/api/sections/${selectedPageId}`, { credentials: "include" })
+    fetch(`https://api.kirin-cms.nl/api/sections/${selectedPageId}`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         setSections((prev) => ({

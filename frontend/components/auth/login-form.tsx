@@ -39,7 +39,7 @@ export function LoginForm() {
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true)
     try {
-      const loginRes = await fetch("http://localhost:8000/api/auth", {
+      const loginRes = await fetch("https://api.kirin-cms.nl/api/auth", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -53,7 +53,7 @@ export function LoginForm() {
 
       if (loginRes.ok) {
         // ✅ Fetch user after login
-        const meRes = await fetch("http://localhost:8000/api/me", {
+        const meRes = await fetch("https://api.kirin-cms.nl/api/me", {
           method: "GET",
           credentials: "include",
         })

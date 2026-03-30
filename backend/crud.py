@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload
 import models
 import schemas
 import bcrypt
@@ -173,8 +174,7 @@ def create_project(db: Session, project: schemas.ProjectCreate):
     db_project = models.Project(**project.dict())
     db.add(db_project)
     db.commit()
-    db.refresh(db_project)
-    return db_project
+    return get_project(db, db_project.id)
 
 
 def get_projects(db: Session):
@@ -182,11 +182,21 @@ def get_projects(db: Session):
 
 
 def get_project(db: Session, project_id: int):
-    return db.query(models.Project).filter(models.Project.id == project_id).first()
+    return (
+        db.query(models.Project)
+        .options(joinedload(models.Project.fields))
+        .filter(models.Project.id == project_id)
+        .first()
+    )
 
 
 def get_projects_by_domain(db: Session, domain_id: int):
-    return db.query(models.Project).filter(models.Project.domain_id == domain_id).all()
+    return (
+        db.query(models.Project)
+        .options(joinedload(models.Project.fields))
+        .filter(models.Project.domain_id == domain_id)
+        .all()
+    )
 
 
 def update_project(db: Session, project_id: int, project_update: schemas.ProjectUpdate):
@@ -199,8 +209,7 @@ def update_project(db: Session, project_id: int, project_update: schemas.Project
         setattr(db_project, key, value)
 
     db.commit()
-    db.refresh(db_project)
-    return db_project
+    return get_project(db, project_id)
 
 
 def delete_project(db: Session, project_id: int):
@@ -211,6 +220,54 @@ def delete_project(db: Session, project_id: int):
     db.delete(db_project)
     db.commit()
     return db_project
+
+
+def get_project_field_definitions(db: Session, domain_id: int):
+    return (
+        db.query(models.ProjectFieldDefinition)
+        .filter(
+            (models.ProjectFieldDefinition.domain_id.is_(None)) |
+            (models.ProjectFieldDefinition.domain_id == domain_id)
+        )
+        .order_by(models.ProjectFieldDefinition.name.asc())
+        .all()
+    )
+
+
+def get_project_field(db: Session, field_id: int):
+    return db.query(models.ProjectField).filter(models.ProjectField.id == field_id).first()
+
+
+def create_project_field(db: Session, project_field: schemas.ProjectFieldCreate):
+    db_field = models.ProjectField(**project_field.dict())
+    db.add(db_field)
+    db.commit()
+    db.refresh(db_field)
+    return db_field
+
+
+def update_project_field(db: Session, field_id: int, field_update: schemas.ProjectFieldUpdate):
+    db_field = get_project_field(db, field_id)
+    if not db_field:
+        raise HTTPException(status_code=404, detail="Project field not found")
+
+    update_data = field_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_field, key, value)
+
+    db.commit()
+    db.refresh(db_field)
+    return db_field
+
+
+def delete_project_field(db: Session, field_id: int):
+    db_field = get_project_field(db, field_id)
+    if not db_field:
+        raise HTTPException(status_code=404, detail="Project field not found")
+
+    db.delete(db_field)
+    db.commit()
+    return db_field
 
 
 # MEDIA
@@ -277,7 +334,7 @@ def delete_media(db: Session, media_id: int):
     db.commit()
     return media_item
 
-def update_media(db: Session, media_id: int, title: str, text: str, section_id: int):
+def update_media(db: Session, media_id: int, title: str, text: str, section_id: int, project_id: int | None):
     """
     Update the title and text (alt text) of a media item.
     Args:
@@ -296,6 +353,7 @@ def update_media(db: Session, media_id: int, title: str, text: str, section_id: 
     media_item.title = title
     media_item.text = text
     media_item.section_id = section_id
+    media_item.project_id = project_id
     db.commit()
     db.refresh(media_item)
     return media_item

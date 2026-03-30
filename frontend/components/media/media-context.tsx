@@ -45,7 +45,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const fetchMedia = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/media/domain`, {
+        const response = await fetch(`https://api.kirin-cms.nl/api/media/domain`, {
           method: "GET",
           credentials: "include",
         })
@@ -77,7 +77,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     const formData = new FormData()
     formData.append("file", file)
 
-    const response = await fetch(`http://localhost:8000/media/upload`, {
+    const response = await fetch(`https://api.kirin-cms.nl/media/upload`, {
       method: "POST",
       body: formData,
       credentials: "include",
@@ -93,7 +93,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const deleteMedia = useCallback(async (id: number) => {
-    // const response = await fetch(`http://localhost:8000/api/media/${id}`, {
+    // const response = await fetch(`https://api.kirin-cms.nl/api/media/${id}`, {
     //   method: "DELETE",
     //   credentials: "include",
     // })

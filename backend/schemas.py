@@ -100,8 +100,46 @@ class ProjectUpdate(BaseModel):
     description: Optional[str] = None
 
 
+class ProjectFieldDefinitionBase(BaseModel):
+    name: str
+    key_name: str
+    field_type: str = "text"
+    domain_id: Optional[int] = None
+
+
+class ProjectFieldDefinitionRead(ProjectFieldDefinitionBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ProjectFieldBase(BaseModel):
+    project_id: int
+    field_definition_id: Optional[int] = None
+    field_key: str
+    field_value: Optional[str] = None
+    field_type: str = "text"
+
+
+class ProjectFieldCreate(ProjectFieldBase):
+    pass
+
+
+class ProjectFieldUpdate(BaseModel):
+    field_value: Optional[str] = None
+    field_key: Optional[str] = None
+    field_type: Optional[str] = None
+    field_definition_id: Optional[int] = None
+
+
+class ProjectFieldRead(ProjectFieldBase):
+    id: int
+
+
 class ProjectRead(ProjectBase):
     id: int
+    fields: List[ProjectFieldRead] = []
 
     class Config:
         from_attributes = True
@@ -152,9 +190,10 @@ class MediaRead(MediaBase):
         from_attributes = True
 
 class MediaUpdate(BaseModel):
-    title: Optional[str]
-    text: Optional[str]
-    section_id: Optional[int]
+    title: Optional[str] = None
+    text: Optional[str] = None
+    section_id: Optional[int] = None
+    project_id: Optional[int] = None
 
 class MediaNoUploadedBy(BaseModel):
     id: int

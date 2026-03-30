@@ -293,6 +293,78 @@ def delete_project(
     return {"message": f"Project with ID {project_id} has been deleted successfully"}
 
 
+@app.get("/api/project-field-definitions", response_model=List[schemas.ProjectFieldDefinitionRead])
+def get_project_field_definitions(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    domain = crud.get_domains_by_user_id(db, current_user.id)
+    if not domain:
+        return []
+    return crud.get_project_field_definitions(db, domain.id)
+
+
+@app.post("/api/project-fields", response_model=schemas.ProjectFieldRead)
+def create_project_field(
+    project_field: schemas.ProjectFieldCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    project = crud.get_project(db, project_field.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    domain = crud.get_domain(db, project.domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to add fields to this project")
+
+    return crud.create_project_field(db, project_field)
+
+
+@app.put("/api/project-fields/{field_id}", response_model=schemas.ProjectFieldRead)
+def update_project_field(
+    field_id: int,
+    field_update: schemas.ProjectFieldUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    db_field = crud.get_project_field(db, field_id)
+    if not db_field:
+        raise HTTPException(status_code=404, detail="Project field not found")
+
+    project = crud.get_project(db, db_field.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    domain = crud.get_domain(db, project.domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to update fields for this project")
+
+    return crud.update_project_field(db, field_id, field_update)
+
+
+@app.delete("/api/project-fields/{field_id}", response_model=dict)
+def delete_project_field(
+    field_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    db_field = crud.get_project_field(db, field_id)
+    if not db_field:
+        raise HTTPException(status_code=404, detail="Project field not found")
+
+    project = crud.get_project(db, db_field.project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    domain = crud.get_domain(db, project.domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not allowed to delete fields for this project")
+
+    crud.delete_project_field(db, field_id)
+    return {"message": f"Project field with ID {field_id} deleted successfully"}
+
+
 # -- SECTIONS --
 @app.post("/api/pages/{page_id}/sections/", response_model=schemas.SectionRead)
 def create_section(page_id: int, section: schemas.SectionCreate, db: Session = Depends(get_db)):
@@ -506,7 +578,12 @@ def update_media(
         schemas.MediaRead: The updated media item.
     """
     updated_media = crud.update_media(
-        db, media_id, update_data.title, update_data.text, update_data.section_id
+        db,
+        media_id,
+        update_data.title,
+        update_data.text,
+        update_data.section_id,
+        update_data.project_id,
     )
 
     return updated_media

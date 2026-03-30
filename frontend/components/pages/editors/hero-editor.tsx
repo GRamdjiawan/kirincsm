@@ -14,7 +14,7 @@ export function HeroEditor() {
   useEffect(() => {
     if (!selectedSection || selectedSection.type !== "HERO") return
 
-    fetch(`http://localhost:8000/api/media/${selectedSection.id}`, { credentials: "include" })
+    fetch(`https://api.kirin-cms.nl/api/media/${selectedSection.id}`, { credentials: "include" })
       .then(res => res.json())
       .then(data => setMedia(Array.isArray(data) ? data : []))
       .catch(err => {
