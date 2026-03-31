@@ -52,7 +52,7 @@ export default function UsersPage() {
         </Button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-center">
+      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -64,7 +64,7 @@ export default function UsersPage() {
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="border-white/10 hover:bg-white/5 rounded-xl whitespace-nowrap">
+            <Button variant="outline" className="w-full sm:w-auto border-white/10 hover:bg-white/5 rounded-xl whitespace-nowrap">
               <Filter className="mr-2 h-4 w-4" />
               {filterRole || "All Roles"}
             </Button>

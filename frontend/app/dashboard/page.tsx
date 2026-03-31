@@ -69,30 +69,34 @@ export default function Dashboard() {
             {userName}
           </h2>
         </div>
-
         {/* Conditional Rendering for Manage Images Button */}
         {!loadingDomain && hasDomain ? (
-          <div className="flex gap-4 sm:pt-8">
-            <Button
+          
+          <div className="my-4 sm:pt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+              <Button
               asChild
               size="lg"
-              className="h-12 sm:h-14 md:h-16 px-6 sm:px-8 md:px-12 text-base sm:text-lg md:text-xl font-semibold bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-blue transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-xl"
+              className="w-full h-12 sm:h-14 md:h-16 px-6 sm:px-8 md:px-12 text-base sm:text-lg md:text-xl font-semibold bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-blue transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-xl"
             >
               <Link href="/dashboard/projects" className="flex items-center gap-3 sm:gap-4">
                 <FolderClosed className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7" />
                 <span>Manage Projects</span>
               </Link>
             </Button>
+            </div>
+            <div>
             <Button
               asChild
               size="lg"
-              className="h-12 sm:h-14 md:h-16 px-6 sm:px-8 md:px-12 text-base sm:text-lg md:text-xl font-semibold bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-blue transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-xl"
+              className="w-full h-12 sm:h-14 md:h-16 px-6 sm:px-8 md:px-12 text-base sm:text-lg md:text-xl font-semibold bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-blue transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl rounded-xl"
             >
               <Link href="/dashboard/images" className="flex items-center gap-3 sm:gap-4">
                 <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7" />
                 <span>Manage Images</span>
               </Link>
             </Button>
+            </div>
           </div>
         ) : (
           !loadingDomain && (
@@ -107,7 +111,6 @@ export default function Dashboard() {
             </div>
           )
         )}
-
         {/* Decorative Elements */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute top-1/4 left-1/4 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-neon-blue/10 rounded-full blur-3xl animate-pulse"></div>

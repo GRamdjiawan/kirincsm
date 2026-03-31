@@ -508,11 +508,11 @@ export default function ProjectsPage() {
             {/* Dynamic field input row */}
             <div>
               <label className="text-sm font-medium text-white mb-1.5 block">Add Field</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <select
                   value={fieldInput.definitionId}
                   onChange={(e) => setFieldInput((p) => ({ ...p, definitionId: e.target.value }))}
-                  className="flex-shrink-0 w-40 bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-neon-blue"
+                  className="w-full sm:w-40 bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-neon-blue"
                 >
                   <option value="" disabled className="bg-gray-900">
                     Select field...
@@ -537,7 +537,7 @@ export default function ProjectsPage() {
                   size="sm"
                   onClick={handleAddField}
                   disabled={!fieldInput.definitionId || !fieldInput.value.trim()}
-                  className="h-10 px-3 flex-shrink-0 bg-gradient-to-r from-neon-blue to-neon-purple rounded-xl disabled:opacity-30"
+                  className="h-10 px-3 sm:flex-shrink-0 bg-gradient-to-r from-neon-blue to-neon-purple rounded-xl disabled:opacity-30"
                 >
                   Confirm
                 </Button>

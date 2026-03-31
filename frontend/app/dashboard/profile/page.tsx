@@ -425,7 +425,7 @@ export default function ProfilePage() {
                         <Button
                           variant="ghost"
                           className="text-neon-blue hover:bg-white/10 rounded-lg"
-                          onClick={() => window.open(`https://${domain.url}`, "_blank")}
+                          onClick={() => window.open(`https://${domain.name}`, "_blank")}
                         >
                           Visit
                         </Button>
