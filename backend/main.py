@@ -293,6 +293,99 @@ def delete_project(
     return {"message": f"Project with ID {project_id} has been deleted successfully"}
 
 
+@app.get("/api/public/projects", response_model=List[schemas.ProjectWithAllData])
+def get_all_projects_public(db: Session = Depends(get_db)):
+    """
+    PUBLIC ENDPOINT: Get all projects with complete data.
+    
+    Returns all projects across all domains with:
+    - Project title and description
+    - All project fields (custom field data)
+    - All associated media (images and other files)
+    
+    This endpoint is public and does not require authentication.
+    Perfect for embedding project data in other websites or applications.
+    
+    Example response:
+    [
+        {
+            "id": 1,
+            "domain_id": 1,
+            "title": "Project Name",
+            "description": "Project Description",
+            "fields": [...],
+            "media_items": [...]
+        }
+    ]
+    """
+    projects = crud.get_all_projects_with_data(db)
+    if not projects:
+        return []
+    return projects
+
+
+@app.get("/api/public/projects/{domain_name}", response_model=List[schemas.ProjectWithAllData])
+def get_projects_by_domain_name(
+    domain_name: str,
+    db: Session = Depends(get_db)
+):
+    """
+    PUBLIC ENDPOINT: Get all projects for a specific domain by domain name.
+    
+    Path Parameter:
+    - domain_name: The domain name (e.g., "kirin-cms.nl", "example.com")
+    
+    Returns all projects for the specified domain with:
+    - Project title and description
+    - All project fields (custom field data)
+    - All associated media (images and other files)
+    
+    This endpoint is public and does not require authentication.
+    Perfect for embedding domain-specific project data in other websites or applications.
+    
+    Example:
+    GET /api/public/projects/kirin-cms.nl
+    
+    Example response:
+    [
+        {
+            "id": 1,
+            "domain_id": 1,
+            "title": "Project Name",
+            "description": "Project Description",
+            "fields": [
+                {
+                    "id": 1,
+                    "project_id": 1,
+                    "field_definition_id": 1,
+                    "field_key": "custom_field",
+                    "field_value": "value",
+                    "field_type": "text"
+                }
+            ],
+            "media_items": [
+                {
+                    "id": 1,
+                    "title": "Project Image",
+                    "file_url": "/uploads/image.jpg",
+                    "type": "image",
+                    "aspect_ratio": 1.5,
+                    "domain_id": 1,
+                    "uploaded_by": 1,
+                    "section_id": null,
+                    "project_id": 1,
+                    "text": null
+                }
+            ]
+        }
+    ]
+    """
+    projects = crud.get_projects_by_domain_name(db, domain_name)
+    if not projects:
+        return []
+    return projects
+
+
 @app.get("/api/project-field-definitions", response_model=List[schemas.ProjectFieldDefinitionRead])
 def get_project_field_definitions(
     db: Session = Depends(get_db),

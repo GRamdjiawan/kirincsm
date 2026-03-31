@@ -202,6 +202,38 @@ def get_projects_by_domain(db: Session, domain_id: int):
     )
 
 
+def get_all_projects_with_data(db: Session):
+    """
+    Get all projects with all their related data (fields and media).
+    This is a public endpoint that returns comprehensive project information.
+    """
+    return (
+        db.query(models.Project)
+        .options(
+            joinedload(models.Project.fields),
+            joinedload(models.Project.media_items)
+        )
+        .all()
+    )
+
+
+def get_projects_by_domain_name(db: Session, domain_name: str):
+    """
+    Get all projects for a specific domain by domain name.
+    Includes all related data (fields and media).
+    """
+    return (
+        db.query(models.Project)
+        .join(models.Domain, models.Project.domain_id == models.Domain.id)
+        .options(
+            joinedload(models.Project.fields),
+            joinedload(models.Project.media_items)
+        )
+        .filter(models.Domain.name == domain_name)
+        .all()
+    )
+
+
 def update_project(db: Session, project_id: int, project_update: schemas.ProjectUpdate):
     db_project = get_project(db, project_id)
     if not db_project:

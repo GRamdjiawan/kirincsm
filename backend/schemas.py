@@ -144,6 +144,19 @@ class ProjectRead(ProjectBase):
     class Config:
         from_attributes = True
 
+
+class ProjectWithAllData(ProjectBase):
+    """
+    Comprehensive project response with all related data.
+    Includes title, description, project fields, and media items.
+    """
+    id: int
+    fields: List[ProjectFieldRead] = []
+    media_items: List['MediaRead'] = []
+
+    class Config:
+        from_attributes = True
+
 # SEO SCHEMAS
 class SEOBase(BaseModel):
     meta_title: Optional[str]  # Updated field name
