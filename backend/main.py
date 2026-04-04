@@ -599,9 +599,22 @@ async def upload_file(
     if len(contents) > MAX_FILE_SIZE_MB * 1024 * 1024:
         raise HTTPException(status_code=413, detail="File too large")
 
-    domain = crud.get_domains_by_user_id(db, current_user.id)
-    if not domain:
+    user_domains = crud.get_all_domains_by_user_id(db, current_user.id)
+    if not user_domains:
         raise HTTPException(status_code=404, detail="Domain not found for the current user")
+
+    domain = None
+    if domain_id is None:
+        if len(user_domains) == 1:
+            domain = user_domains[0]
+        else:
+            raise HTTPException(status_code=400, detail="domain_id is required when user has multiple domains")
+    else:
+        domain = crud.get_domain(db, domain_id)
+        if not domain:
+            raise HTTPException(status_code=404, detail="Selected domain not found")
+        if domain.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="You are not allowed to upload to this domain")
 
     UPLOAD_DIR = "./uploads/" + str(current_user.id) + str(domain.name)
     if not os.path.exists(UPLOAD_DIR):

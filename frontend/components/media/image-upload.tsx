@@ -10,11 +10,17 @@ import { MediaSelector } from "./media-selector"
 
 interface UploadFile {
   id: string
-  file: File
+  file: File | null
   preview?: string
   progress: number
   status: "pending" | "uploading" | "success" | "error"
   error?: string
+}
+
+interface LibraryMediaItem {
+  id: string | number
+  file_url?: string
+  url?: string
 }
 
 interface ImageUploadProps {
@@ -22,7 +28,8 @@ interface ImageUploadProps {
   maxFiles?: number
   maxFileSize?: number // in bytes
   acceptedTypes?: string[]
-  onAddMediaItems?: (items: MediaItem[]) => void // New prop
+  onAddMediaItems?: (items: LibraryMediaItem[]) => void // New prop
+  domainId?: number
 
 }
 
@@ -32,12 +39,13 @@ export function ImageUpload({
   maxFileSize = 30 * 1024 * 1024, // 10MB
   acceptedTypes = ["image/*", "video/*"],
   onAddMediaItems,
+  domainId,
 }: ImageUploadProps) {
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const validateFile = (file: File): string | null => {
+  const validateFile = (file: File): string | undefined => {
     if (file.size > maxFileSize) {
       return `File size must be less than ${Math.round(maxFileSize / 1024 / 1024)}MB`
     }
@@ -53,7 +61,7 @@ export function ImageUpload({
       return "File type not supported"
     }
 
-    return null
+    return undefined
   }
 
   const createPreview = (file: File): Promise<string | undefined> => {
@@ -67,6 +75,23 @@ export function ImageUpload({
         resolve(undefined)
       }
     })
+  }
+
+  const mapBackendErrorToMessage = (detail?: string) => {
+    if (!detail) return "Upload failed"
+
+    if (
+      detail.includes("Domain not found for the current user") ||
+      detail.includes("No domains found for the current user")
+    ) {
+      return "No domain is linked to this account yet. Add/select a domain first, then upload again."
+    }
+
+    if (detail.includes("domain_id is required when user has multiple domains")) {
+      return "Select a domain first before uploading files."
+    }
+
+    return detail
   }
 
   const processFiles = async (files: FileList) => {
@@ -99,6 +124,26 @@ export function ImageUpload({
   }
 
   const uploadFileToServer = async (uploadFile: UploadFile) => {
+    if (!uploadFile.file) {
+      setUploadFiles((prev) =>
+        prev.map((f) =>
+          f.id === uploadFile.id ? { ...f, status: "error", error: "No file available for upload." } : f,
+        ),
+      )
+      return
+    }
+
+    if (!domainId) {
+      setUploadFiles((prev) =>
+        prev.map((f) =>
+          f.id === uploadFile.id
+            ? { ...f, status: "error", error: "Select a domain first before uploading files." }
+            : f,
+        ),
+      )
+      return
+    }
+
     const formData = new FormData()
     formData.append("file", uploadFile.file)
 
@@ -108,17 +153,21 @@ export function ImageUpload({
         setUploadFiles((prev) => prev.map((f) => (f.id === uploadFile.id ? { ...f, progress } : f)))
       }
 
-      console.log(formData);
-      
-
-      const response = await fetch("https://api.kirin-cms.nl/api/upload", {
+      const response = await fetch(`https://api.kirin-cms.nl/api/upload?domain_id=${domainId}`, {
         method: "POST",
         body: formData,
         credentials: "include",
       })
 
       if (!response.ok) {
-        throw new Error("Upload failed")
+        let detail = ""
+        try {
+          const errorPayload = await response.json()
+          detail = errorPayload?.detail || ""
+        } catch {
+          detail = ""
+        }
+        throw new Error(mapBackendErrorToMessage(detail))
       }
 
       const uploadedFile = await response.json()
@@ -133,8 +182,9 @@ export function ImageUpload({
 
       onUploadComplete?.([uploadedFile])
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Upload failed"
       setUploadFiles((prev) =>
-        prev.map((f) => (f.id === uploadFile.id ? { ...f, status: "error", error: "Upload failed" } : f)),
+        prev.map((f) => (f.id === uploadFile.id ? { ...f, status: "error", error: errorMessage } : f)),
       )
     }
   }
@@ -183,13 +233,13 @@ export function ImageUpload({
     return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
   }
 
-  const addMediaItems = (items: MediaItem[]) => {
+  const addMediaItems = (items: LibraryMediaItem[]) => {
     const newFiles = items.map((item) => ({
-      id: item.id,
+      id: String(item.id),
       file: null, // Media library items won't have a `File` object
-      preview: item.file_url,
+      preview: item.file_url || item.url,
       progress: 100,
-      status: "success",
+      status: "success" as const,
     }))
 
     setUploadFiles((prev) => [...prev, ...newFiles])
@@ -267,12 +317,12 @@ export function ImageUpload({
                     {uploadFile.preview ? (
                       <img
                         src={uploadFile.preview || "/placeholder.svg"}
-                        alt={uploadFile.file.name}
+                        alt={uploadFile.file?.name || "selected media"}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        {uploadFile.file.type.startsWith("image/") ? (
+                        {(uploadFile.file?.type || "").startsWith("image/") ? (
                           <FileImage className="h-5 w-5 text-gray-400" />
                         ) : (
                           <FileVideo className="h-5 w-5 text-gray-400" />
@@ -284,7 +334,7 @@ export function ImageUpload({
                   {/* File Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-medium text-white truncate">{uploadFile.file.name}</p>
+                      <p className="text-sm font-medium text-white truncate">{uploadFile.file?.name || "Selected media"}</p>
                       <Badge
                         variant={
                           uploadFile.status === "success"
@@ -298,7 +348,7 @@ export function ImageUpload({
                         {uploadFile.status}
                       </Badge>
                     </div>
-                    <p className="text-xs text-gray-400">{formatFileSize(uploadFile.file.size)}</p>
+                    {uploadFile.file && <p className="text-xs text-gray-400">{formatFileSize(uploadFile.file.size)}</p>}
 
                     {/* Progress Bar */}
                     {uploadFile.status === "uploading" && <Progress value={uploadFile.progress} className="mt-2 h-1" />}
