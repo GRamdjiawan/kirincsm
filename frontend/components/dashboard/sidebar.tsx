@@ -132,15 +132,15 @@ export function Sidebar({ onClose }: SidebarProps) {
     },
     ...(selectedDomain
       ? [
+        {
+            title: "Projects",
+            icon: FolderClosed,
+            href: "/dashboard/projects",
+          },
           {
             title: "Media",
             icon: ImageIcon,
             href: "/dashboard/images",
-          },
-          {
-            title: "Projects",
-            icon: FolderClosed,
-            href: "/dashboard/projects",
           },
         ]
       : []),
