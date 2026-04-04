@@ -1,0 +1,454 @@
+Nebula CMS Backend - Public API Calls
+=====================================
+
+Base URL
+--------
+Use your API host, for example:
+- Local: http://localhost:8000
+
+Notes
+-----
+- "Public" here means no `get_current_user` dependency is required by the route.
+- Some public routes still behave differently when auth cookies are present (for example logout).
+- Response examples are based on current implementation in backend/main.py.
+
+1) GET /api/public/projects
+---------------------------
+Purpose:
+- Returns all projects across all domains, including project fields and media.
+
+How it works:
+- Calls `crud.get_all_projects_with_data(db)`.
+- Returns an empty list if no projects exist.
+
+Request:
+- No body.
+- No auth required.
+
+Success response:
+- 200 OK
+- Body: array of project objects.
+
+Example response body:
+[
+  {
+    "id": 1,
+    "domain_id": 1,
+    "title": "Project Name",
+    "description": "Project Description",
+    "fields": [
+      {
+        "id": 1,
+        "project_id": 1,
+        "field_definition_id": 1,
+        "field_key": "custom_field",
+        "field_value": "value",
+        "field_type": "text"
+      }
+    ],
+    "media_items": [
+      {
+        "id": 1,
+        "title": "Project Image",
+        "file_url": "/uploads/image.jpg",
+        "text": null,
+        "type": "image",
+        "aspect_ratio": 1.5,
+        "domain_id": 1,
+        "uploaded_by": 1,
+        "section_id": null,
+        "project_id": 1
+      }
+    ]
+  }
+]
+
+Common error responses:
+- None explicitly raised in the route. Usually returns [] when no data.
+
+
+2) GET /api/public/projects/{domain_name}
+------------------------------------------
+Purpose:
+- Returns all projects for a specific domain name, including fields and media.
+
+How it works:
+- Joins projects with domains by name.
+- Calls `crud.get_projects_by_domain_name(db, domain_name)`.
+- Returns empty list if no matching domain/projects.
+
+Path params:
+- domain_name (string), e.g. "kirin-cms.nl"
+
+Request:
+- No body.
+- No auth required.
+
+Success response:
+- 200 OK
+- Body: array of project objects (same structure as endpoint #1).
+
+Common error responses:
+- None explicitly raised in the route. Usually returns [] when no data.
+
+
+3) GET /api/fill-gallery/{domain_id}
+-------------------------------------
+Purpose:
+- Returns gallery media for a domain (items not linked to a project), including images/videos.
+
+How it works:
+- Reads all media for the given domain via `crud.get_all_media_by_domain(db, domain_id)`.
+- Filters out items where `project_id` is not null.
+- Keeps image/video items based on type/file extension.
+
+Path params:
+- domain_id (numeric ID in path)
+
+Request:
+- No body.
+- No auth required.
+
+Success response:
+- 200 OK
+- Body: array of media objects without uploaded_by.
+
+Example response body:
+[
+  {
+    "id": 10,
+    "title": "hero-image",
+    "file_url": "/uploads/1example.com/hero.jpg",
+    "type": "image",
+    "domain_id": 1,
+    "section_id": null,
+    "text": "homepage hero"
+  }
+]
+
+Common error responses:
+- 404 Not Found: {"detail":"No media found for the domain"}
+- 404 Not Found: {"detail":"No gallery media found for this domain"}
+
+
+4) POST /api/register/
+----------------------
+Purpose:
+- Creates a new user account and sets auth cookie.
+
+How it works:
+- Calls `crud.create_user`.
+- Creates JWT cookie `access_token` when successful.
+
+Request body:
+{
+  "name": "Full Name",
+  "email": "user@example.com",
+  "password": "plain-text-password",
+  "role": "admin|editor|client"
+}
+
+Success response:
+- 200 OK
+- Body:
+  {
+    "message": "Logged in",
+    "user": "user@example.com"
+  }
+- Sets cookie: `access_token` (HttpOnly, Secure, SameSite=None)
+
+Common error responses:
+- 400 Bad Request: {"detail":"Email already registered"}
+
+
+5) POST /api/auth
+-----------------
+Purpose:
+- Authenticates a user and sets auth cookie.
+
+How it works:
+- Verifies credentials with `crud.authenticate_user`.
+- On success, sets JWT cookie `access_token`.
+
+Request body:
+{
+  "email": "user@example.com",
+  "password": "plain-text-password"
+}
+
+Success response:
+- 200 OK
+- Body:
+  {
+    "message": "Logged in",
+    "user": "user@example.com"
+  }
+- Sets cookie: `access_token` (HttpOnly, Secure, SameSite=None)
+
+Common error responses:
+- 400 Bad Request: {"detail":"User not found"}
+
+
+6) POST /api/logout
+-------------------
+Purpose:
+- Logs the user out by deleting auth cookie and blacklisting current token when present.
+
+How it works:
+- Reads `access_token` cookie if available.
+- If found, blacklists token in memory.
+- Always returns logged-out message and deletes cookie.
+
+Request:
+- No body.
+- No auth required.
+
+Success response:
+- 200 OK
+- Body:
+  {
+    "message": "Logged out"
+  }
+- Deletes cookie: `access_token`
+
+Common error responses:
+- None explicitly raised.
+
+
+7) GET /api/users/
+------------------
+Purpose:
+- Returns all users.
+
+How it works:
+- Calls `crud.get_users(db)`.
+- Raises 404 if there are no users.
+
+Request:
+- No body.
+- No auth required.
+
+Success response:
+- 200 OK
+- Body: array of users.
+
+User object shape:
+{
+  "id": 1,
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "role": "client"
+}
+
+Common error responses:
+- 404 Not Found: {"detail":"No users found."}
+
+
+8) POST /api/pages/
+-------------------
+Purpose:
+- Creates a page.
+
+How it works:
+- Calls `crud.create_page(db, page)`.
+
+Request body:
+{
+  "title": "Home",
+  "hierarchy": 1,
+  "domain_id": 1
+}
+
+Success response:
+- 200 OK
+- Body:
+  {
+    "id": 123,
+    "title": "Home",
+    "hierarchy": 1,
+    "domain_id": 1
+  }
+
+Common error responses:
+- Validation errors (422) if required fields are missing/invalid.
+
+
+9) POST /api/pages/{page_id}/sections/
+--------------------------------------
+Purpose:
+- Creates a section on a page.
+
+How it works:
+- Calls `crud.create_section(db, section, page_id)`.
+- `type` is required by schema/model.
+
+Path params:
+- page_id (int)
+
+Request body:
+{
+  "title": "Hero",
+  "position": 1,
+  "type": "hero",
+  "page_id": 1
+}
+
+Success response:
+- 200 OK
+- Body:
+  {
+    "id": 10,
+    "page_id": 1,
+    "title": "Hero",
+    "position": 1,
+    "type": "hero"
+  }
+
+Common error responses:
+- 400 Bad Request: {"detail":"Section type is required"}
+- 422 validation errors.
+
+
+10) GET /api/domains/{user_id}
+-------------------------------
+Purpose:
+- Returns one domain for a user (first match).
+
+How it works:
+- Calls `crud.get_domains_by_user_id(db, user_id)` (returns first domain).
+
+Path params:
+- user_id (int)
+
+Success response:
+- 200 OK
+- Body:
+  {
+    "id": 1,
+    "name": "example.com",
+    "user_id": 2
+  }
+
+Common error responses:
+- 404 Not Found: {"detail":"No domains found for this user."}
+
+
+11) GET /api/users/{user_id}/domains
+------------------------------------
+Purpose:
+- Returns all domains for a user.
+
+How it works:
+- Calls `crud.get_all_domains_by_user_id(db, user_id)`.
+- Returns [] when none.
+
+Path params:
+- user_id (int)
+
+Success response:
+- 200 OK
+- Body: array of domains.
+
+Common error responses:
+- None explicitly raised in route.
+
+
+12) GET /api/domains
+--------------------
+Purpose:
+- Returns all domains in the system.
+
+How it works:
+- Calls `crud.get_domains(db)`.
+
+Success response:
+- 200 OK
+- Body: array of domains.
+
+Common error responses:
+- 404 Not Found: {"detail":"No domains found."}
+
+
+13) POST /api/seo/
+------------------
+Purpose:
+- Creates SEO settings for a domain.
+
+How it works:
+- Calls `crud.create_seo(db, seo)`.
+
+Request body:
+{
+  "domain_id": 1,
+  "meta_title": "My Site",
+  "meta_description": "Description",
+  "keywords": "cms,website",
+  "icon": "/favicon.ico"
+}
+
+Success response:
+- 200 OK
+- Body:
+  {
+    "id": 1,
+    "domain_id": 1,
+    "meta_title": "My Site",
+    "meta_description": "Description",
+    "keywords": "cms,website",
+    "icon": "/favicon.ico"
+  }
+
+Common error responses:
+- Validation errors (422).
+
+
+14) POST /api/media/
+--------------------
+Purpose:
+- Creates a media record directly.
+
+How it works:
+- Calls `crud.create_media(db, media)`.
+- `title` is required.
+
+Request body:
+{
+  "title": "Banner",
+  "file_url": "/uploads/path/banner.jpg",
+  "type": "image",
+  "domain_id": 1,
+  "uploaded_by": 1,
+  "section_id": null,
+  "project_id": null,
+  "text": "alt text",
+  "aspect_ratio": 0.5625
+}
+
+Success response:
+- 200 OK
+- Body: created media object.
+
+Common error responses:
+- 400 Bad Request: {"detail":"Media title is required"}
+- 422 validation errors.
+
+
+Other API Routes (Not Public)
+=============================
+These routes require the current user from `access_token` cookie via `get_current_user`:
+- GET /api/me
+- PUT /api/users/update
+- PUT /api/users/change-password
+- GET /api/pages/
+- All /api/projects/* except /api/public/projects*
+- GET /api/project-field-definitions
+- POST /api/project-fields
+- PUT /api/project-fields/{field_id}
+- DELETE /api/project-fields/{field_id}
+- GET /api/sections/{page_id}
+- GET /api/media/domain
+- GET /api/media/{section_id}
+- GET /api/media/project/{project_id}
+- POST /api/upload
+- DELETE /api/media/{media_id}
+- PUT /api/media/{media_id}

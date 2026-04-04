@@ -8,6 +8,7 @@ import {
   useCallback,
   useEffect,
 } from "react"
+import { useDomain } from "@/context/DomainContext"
 
 interface MediaItem {
   id: number
@@ -39,13 +40,19 @@ interface MediaContextType {
 const MediaContext = createContext<MediaContextType | undefined>(undefined)
 
 export function MediaProvider({ children }: { children: React.ReactNode }) {
+  const { selectedDomain } = useDomain()
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
   const [filter, setFilter] = useState<MediaFilter>({ type: "all" })
 
   useEffect(() => {
+    if (!selectedDomain?.id) {
+      setMediaItems([])
+      return
+    }
+
     const fetchMedia = async () => {
       try {
-        const response = await fetch(`https://api.kirin-cms.nl/api/media/domain`, {
+        const response = await fetch(`https://api.kirin-cms.nl/api/media/domain?domain_id=${selectedDomain.id}`, {
           method: "GET",
           credentials: "include",
         })
@@ -60,7 +67,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
       }
     }
     fetchMedia()
-  }, [])
+  }, [selectedDomain?.id])
 
   const filteredItems = mediaItems.filter((item) => {
     if (filter.type && filter.type !== "all" && item.type !== filter.type) {

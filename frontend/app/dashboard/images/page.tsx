@@ -82,7 +82,7 @@ export default function ImagesPage() {
       setIsLoading(true)
       setMediaError(null)
       try {
-        const response = await fetch(`https://api.kirin-cms.nl/api/media/domain`, {
+        const response = await fetch(`https://api.kirin-cms.nl/api/media/domain?domain_id=${selectedDomain?.id}`, {
           method: "GET",
           credentials: "include",
         })
@@ -98,8 +98,8 @@ export default function ImagesPage() {
           setMediaItems([])
         } else {
           const data = await response.json()
-          // Filter by selected domain and exclude text items
-          setMediaItems(data.filter((item: MediaItem) => item.domain_id === selectedDomain?.id && item.type !== "text"))
+          // Endpoint is domain-scoped; keep only non-text media.
+          setMediaItems(data.filter((item: MediaItem) => item.type !== "text"))
         }
       } catch (error) {
         console.error(error)
