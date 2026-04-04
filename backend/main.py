@@ -526,22 +526,34 @@ def create_seo(seo: schemas.SEOCreate, db: Session = Depends(get_db)):
 # -- MEDIA --
 @app.get("/api/media/domain", response_model=List[schemas.MediaRead])
 def get_media_by_domain(
+    domain_id: int | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     """
-    Get all media items for the current user's domains.
+    Get media items for a selected domain owned by the current user.
+
+    Query param:
+    - domain_id: required when the user has multiple domains.
     """
-    # Fetch all domains for the current user
-    domain = crud.get_domains_by_user_id(db, current_user.id)
-    if not domain:
+    user_domains = crud.get_all_domains_by_user_id(db, current_user.id)
+    if not user_domains:
         raise HTTPException(status_code=404, detail="No domains found for the current user")
 
-    media_items =crud.get_media_by_domain(db, domain.id)
+    selected_domain = None
+    if domain_id is None:
+        if len(user_domains) == 1:
+            selected_domain = user_domains[0]
+        else:
+            raise HTTPException(status_code=400, detail="domain_id is required when user has multiple domains")
+    else:
+        selected_domain = crud.get_domain(db, domain_id)
+        if not selected_domain:
+            raise HTTPException(status_code=404, detail="Selected domain not found")
+        if selected_domain.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="You are not allowed to view media for this domain")
 
-    if not media_items:
-        raise HTTPException(status_code=404, detail="No media found for the current user's domains")
-
+    media_items = crud.get_media_by_domain(db, selected_domain.id)
     return media_items
 
 @app.post("/api/media/", response_model=schemas.MediaRead)
