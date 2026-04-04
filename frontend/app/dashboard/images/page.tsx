@@ -21,6 +21,7 @@ import {
   FileVideo,
   Save,
   CheckCircle,
+  AlertCircle,
   Filter,
   X,
 } from "lucide-react"
@@ -58,6 +59,7 @@ export default function ImagesPage() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [mediaError, setMediaError] = useState<string | null>(null)
   const [projects, setProjects] = useState<ProjectOption[]>([])
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedMediaIds, setSelectedMediaIds] = useState<number[]>([])
@@ -66,14 +68,33 @@ export default function ImagesPage() {
 
   // Fetch media from API - refetch when domain changes
   useEffect(() => {
+    const mapMediaError = (detail?: string) => {
+      if (
+        detail?.includes("No domains found for the current user") ||
+        detail?.includes("Domain not found for the current user")
+      ) {
+        return "No domain is linked to this account yet. Add/select a domain first, then try uploading media again."
+      }
+      return detail || "Unable to load media for this account."
+    }
+
     const fetchMedia = async () => {
       setIsLoading(true)
+      setMediaError(null)
       try {
         const response = await fetch(`https://api.kirin-cms.nl/api/media/domain`, {
           method: "GET",
           credentials: "include",
         })
         if (!response.ok) {
+          let detail = ""
+          try {
+            const payload = await response.json()
+            detail = payload?.detail || ""
+          } catch {
+            detail = ""
+          }
+          setMediaError(mapMediaError(detail))
           setMediaItems([])
         } else {
           const data = await response.json()
@@ -82,6 +103,7 @@ export default function ImagesPage() {
         }
       } catch (error) {
         console.error(error)
+        setMediaError("Network error while loading media.")
         setMediaItems([])
       } finally {
         setIsLoading(false)
@@ -354,12 +376,27 @@ export default function ImagesPage() {
                   onUploadComplete={handleUploadComplete}
                   maxFiles={10}
                   maxFileSize={30 * 1024 * 1024}
+                  domainId={selectedDomain?.id}
                 />
               </div>
             )}
           </div>
 
           {/* Search and Filter Bar */}
+          {mediaError && (
+            <Card className="bg-red-500/10 border-red-400/30">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-300 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-100">Upload is currently blocked</p>
+                    <p className="text-xs sm:text-sm text-red-200">{mediaError}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
             {/* Search */}
             <div className="flex-1">
