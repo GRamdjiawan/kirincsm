@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Upload, X, FileImage, FileVideo, AlertCircle, CheckCircle } from "lucide-react"
 import { MediaSelector } from "./media-selector"
+import { API_URL } from "@/lib/config"
 
 interface UploadFile {
   id: string
@@ -153,7 +154,7 @@ export function ImageUpload({
         setUploadFiles((prev) => prev.map((f) => (f.id === uploadFile.id ? { ...f, progress } : f)))
       }
 
-      const response = await fetch(`https://api.kirin-cms.nl/api/upload?domain_id=${domainId}`, {
+      const response = await fetch(`${API_URL}/api/upload?domain_id=${domainId}`, {
         method: "POST",
         body: formData,
         credentials: "include",
@@ -275,7 +276,7 @@ export function ImageUpload({
           />
           <Button
             onClick={() => fileInputRef.current?.click()}
-            className="bg-gradient-to-r from-neon-blue to-neon-purple rounded-xl"
+            className="bg-neon-blue hover:bg-neon-blue/90 rounded-xl"
           >
             <Upload className="h-4 w-4 mr-2" />
             Choose Files
@@ -291,7 +292,7 @@ export function ImageUpload({
         }}
         multiple={true}
         trigger={
-          <Button className="bg-gradient-to-r from-neon-blue to-neon-purple rounded-xl">
+          <Button className="bg-neon-blue hover:bg-neon-blue/90 rounded-xl">
             <Upload className="h-4 w-4 mr-2" />
             Select from Media Library
           </Button>

@@ -4,6 +4,7 @@ import { ImageIcon, FolderClosed } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { API_URL } from "@/lib/config"
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -14,7 +15,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (user) {
       setLoadingDomain(true) // Start loading
-      fetch(`https://api.kirin-cms.nl/api/domains/${user.id}`, {
+      fetch(`${API_URL}/api/domains/${user.id}`, {
         method: "GET",
         credentials: "include",
       })

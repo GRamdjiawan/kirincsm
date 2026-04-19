@@ -9,6 +9,7 @@ import {
   useEffect,
 } from "react"
 import { useDomain } from "@/context/DomainContext"
+import { API_URL } from "@/lib/config"
 
 interface MediaItem {
   id: number
@@ -52,7 +53,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
 
     const fetchMedia = async () => {
       try {
-        const response = await fetch(`https://api.kirin-cms.nl/api/media/domain?domain_id=${selectedDomain.id}`, {
+        const response = await fetch(`${API_URL}/api/media/domain?domain_id=${selectedDomain.id}`, {
           method: "GET",
           credentials: "include",
         })
@@ -84,7 +85,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
     const formData = new FormData()
     formData.append("file", file)
 
-    const response = await fetch(`https://api.kirin-cms.nl/media/upload`, {
+    const response = await fetch(`${API_URL}/media/upload`, {
       method: "POST",
       body: formData,
       credentials: "include",
@@ -100,7 +101,7 @@ export function MediaProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const deleteMedia = useCallback(async (id: number) => {
-    // const response = await fetch(`https://api.kirin-cms.nl/api/media/${id}`, {
+    // const response = await fetch(`${API_URL}/api/media/${id}`, {
     //   method: "DELETE",
     //   credentials: "include",
     // })

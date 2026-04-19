@@ -1,3 +1,4 @@
+import { API_URL } from "@/lib/config"
 // Section type definitions
 export type SectionType = "TEXT" | "CAROUSEL" | "GALLERY" | "CARD" | "HERO"
 
@@ -70,7 +71,7 @@ export interface Section {
 }
 
 export const availablePages = async () => {
-  const res = await fetch("https://api.kirin-cms.nl/api/pages",{credentials: "include"})
+  const res = await fetch(`${API_URL}/api/pages`,{credentials: "include"})
   if (!res.ok) {throw new Error("Failed to fetch pages")}
   return res.json()
 }

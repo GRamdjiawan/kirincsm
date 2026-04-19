@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { LoadingScreen } from "@/components/ui/LoadingScreen"
 import { useAuth } from "@/context/AuthContext" // Import the AuthContext
+import { API_URL } from "@/lib/config"
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -39,7 +40,7 @@ export function LoginForm() {
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true)
     try {
-      const loginRes = await fetch("https://api.kirin-cms.nl/api/auth", {
+      const loginRes = await fetch(`${API_URL}/api/auth`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -53,7 +54,7 @@ export function LoginForm() {
 
       if (loginRes.ok) {
         // ✅ Fetch user after login
-        const meRes = await fetch("https://api.kirin-cms.nl/api/me", {
+        const meRes = await fetch(`${API_URL}/api/me`, {
           method: "GET",
           credentials: "include",
         })

@@ -13,6 +13,7 @@ import { useAuth } from "@/context/AuthContext"
 import { useState } from "react"
 import { LoadingScreen } from "@/components/ui/LoadingScreen"
 import { useRouter } from "next/navigation"
+import { API_URL } from "@/lib/config"
 
 export function Header() {
   const { user, setUser, loading } = useAuth()
@@ -26,7 +27,7 @@ export function Header() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("https://api.kirin-cms.nl/api/logout", {
+      const response = await fetch(`${API_URL}/api/logout`, {
         method: "POST",
         credentials: "include",
       })

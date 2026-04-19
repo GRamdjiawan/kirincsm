@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Images, Plus } from "lucide-react"
 import { useSectionContext } from "../section-context"
 import { MediaSelector } from "@/components/media/media-selector"
+import { API_URL } from "@/lib/config"
 
 interface MediaItem {
   id: number
@@ -33,7 +34,7 @@ export function GalleryEditor() {
 
     setIsLoading(true)
 
-    fetch(`https://api.kirin-cms.nl/api/media/${selectedSection.id}`, { credentials: "include" })
+    fetch(`${API_URL}/api/media/${selectedSection.id}`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         setMedia(Array.isArray(data) ? data : [])
@@ -213,7 +214,7 @@ export function GalleryEditor() {
               <CardContent className="p-0">
                 <div className="aspect-square bg-white/10">
                   <img
-                    src={`https://api.kirin-cms.nl/${image.file_url}` || "/placeholder.svg"}
+                    src={`${API_URL}/${image.file_url}` || "/placeholder.svg"}
                     alt={image.text || image.title}
                     className="w-full h-full object-cover"
                   />

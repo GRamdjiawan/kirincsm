@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Images, Upload, Search, Check, FileImage, FileVideo, Plus } from "lucide-react"
 import { MediaProvider, useMediaContext } from "./media-context"
 import type { MediaItem } from "./media-types"
+import { API_URL } from "@/lib/config"
 
 interface MediaSelectorProps {
   onSelect: (items: MediaItem[]) => void
@@ -80,7 +81,7 @@ export function MediaSelector({
           console.log(item);
           
           const updatedItem = { ...item, section_id: selectedSection } // Update section_id
-          const response = await fetch(`https://api.kirin-cms.nl/api/media/${item.id}`, {
+          const response = await fetch(`${API_URL}/api/media/${item.id}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -214,7 +215,7 @@ export function MediaSelector({
                       <CardContent className="p-0">
                         <div className="relative aspect-square">
                           <img
-                            src={`https://api.kirin-cms.nl${item.file_url}`}
+                            src={`${API_URL}${item.file_url}`}
                             alt={item.text || item.title}
                             className="w-full h-full object-cover rounded-t-xl"
                           />

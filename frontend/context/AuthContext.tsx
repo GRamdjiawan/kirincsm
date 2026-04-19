@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { API_URL } from "@/lib/config"
 
 type User = {
   id: number

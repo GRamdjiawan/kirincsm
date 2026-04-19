@@ -628,38 +628,54 @@ async def upload_file(
         if domain.user_id != current_user.id:
             raise HTTPException(status_code=403, detail="You are not allowed to upload to this domain")
 
-    UPLOAD_DIR = "./uploads/" + str(current_user.id) + str(domain.name)
-    if not os.path.exists(UPLOAD_DIR):
-        os.makedirs(UPLOAD_DIR)
+    upload_dir = f"./uploads/{current_user.id}{domain.name}"
+    os.makedirs(upload_dir, exist_ok=True)
 
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as buffer:
-        buffer.write(contents)
-
-    # Calculate aspect ratio if the file is an image
     is_image = file.content_type.startswith("image/")
+    is_video = file.content_type.startswith("video/")
+    stem = os.path.splitext(file.filename)[0]
     aspect_ratio = None
+
     if is_image:
         try:
-            image = Image.open(io.BytesIO(contents))
-            width, height = image.size
+            img = Image.open(io.BytesIO(contents))
+            width, height = img.size
             aspect_ratio = round(height / width, 4)
+
+            # Normalise mode for WebP (handles palette, transparency, etc.)
+            if img.mode not in ("RGB", "RGBA"):
+                img = img.convert("RGBA" if img.mode in ("P", "LA") else "RGB")
+
+            webp_buf = io.BytesIO()
+            img.save(webp_buf, format="WEBP", quality=85, method=6)
+
+            save_filename = f"{stem}.webp"
+            with open(os.path.join(upload_dir, save_filename), "wb") as f:
+                f.write(webp_buf.getvalue())
         except Exception:
-            aspect_ratio = None
+            # Fallback: store original if conversion fails
+            save_filename = file.filename
+            with open(os.path.join(upload_dir, save_filename), "wb") as f:
+                f.write(contents)
+    else:
+        save_filename = file.filename
+        with open(os.path.join(upload_dir, save_filename), "wb") as f:
+            f.write(contents)
+
+    media_type = "image" if is_image else ("video" if is_video else "text")
 
     media_data = schemas.MediaCreate(
-        title=file.filename,
-        file_url=f"/uploads/{current_user.id}{domain.name}/{file.filename}",
-        type="image" if is_image else "text",
+        title=stem,
+        file_url=f"/uploads/{current_user.id}{domain.name}/{save_filename}",
+        type=media_type,
         domain_id=domain.id,
         uploaded_by=current_user.id,
         section_id=section_id,
         text="",
-        aspect_ratio=aspect_ratio  # Will be None for non-images
+        aspect_ratio=aspect_ratio,
     )
 
-    db_media = crud.create_media(db, media_data)
-    return db_media
+    return crud.create_media(db, media_data)
 
 @app.delete("/api/media/{media_id}", response_model=dict)
 def delete_media(
@@ -679,8 +695,8 @@ def delete_media(
     # Fetch the media item from the database
     media_item = crud.delete_media(db, media_id)
 
-    # Delete the file from the uploads directory
-    file_path = os.path.join(UPLOAD_DIR, os.path.basename(media_item.file_url))
+    # file_url is "/uploads/..." — prepend "." to get a relative path
+    file_path = "." + media_item.file_url
     if os.path.exists(file_path):
         os.remove(file_path)
 
