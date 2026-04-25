@@ -369,6 +369,102 @@ def delete_media(db: Session, media_id: int):
     db.commit()
     return media_item
 
+# ADMIN — USERS
+def get_users_filtered(db: Session, email: str | None = None):
+    q = db.query(models.User)
+    if email:
+        q = q.filter(models.User.email.ilike(f"%{email}%"))
+    return q.order_by(models.User.id.asc()).all()
+
+
+def delete_user(db: Session, user_id: int):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db.delete(user)
+    db.commit()
+    return user
+
+
+def update_user_admin(db: Session, user_id: int, data: schemas.AdminUserUpdate):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    for field, value in data.dict(exclude_unset=True).items():
+        setattr(user, field, value)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+# ADMIN — DOMAINS
+def create_domain(db: Session, domain: schemas.DomainCreate):
+    db_domain = models.Domain(**domain.dict())
+    db.add(db_domain)
+    db.commit()
+    db.refresh(db_domain)
+    return db_domain
+
+
+def update_domain(db: Session, domain_id: int, data: schemas.DomainUpdate):
+    domain = db.query(models.Domain).filter(models.Domain.id == domain_id).first()
+    if not domain:
+        raise HTTPException(status_code=404, detail="Domain not found")
+    for field, value in data.dict(exclude_unset=True).items():
+        setattr(domain, field, value)
+    db.commit()
+    db.refresh(domain)
+    return domain
+
+
+def delete_domain(db: Session, domain_id: int):
+    domain = db.query(models.Domain).filter(models.Domain.id == domain_id).first()
+    if not domain:
+        raise HTTPException(status_code=404, detail="Domain not found")
+    db.delete(domain)
+    db.commit()
+    return domain
+
+
+def get_domains_with_owners(db: Session):
+    rows = (
+        db.query(models.Domain, models.User.email, models.User.name)
+        .outerjoin(models.User, models.Domain.user_id == models.User.id)
+        .order_by(models.Domain.id.asc())
+        .all()
+    )
+    result = []
+    for domain, owner_email, owner_name in rows:
+        result.append(schemas.DomainWithOwner(
+            id=domain.id,
+            name=domain.name,
+            user_id=domain.user_id,
+            owner_email=owner_email,
+            owner_name=owner_name,
+        ))
+    return result
+
+
+# ADMIN — EMAIL LOGS
+def create_email_log(db: Session, to_email: str, subject: str, body: str, sent_by: int, status: str, error: str | None = None):
+    log = models.EmailLog(
+        to_email=to_email,
+        subject=subject,
+        body=body,
+        sent_by=sent_by,
+        status=status,
+        error=error,
+    )
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+    return log
+
+
+def get_email_logs(db: Session, limit: int = 100):
+    return db.query(models.EmailLog).order_by(models.EmailLog.sent_at.desc()).limit(limit).all()
+
+
 def update_media(db: Session, media_id: int, title: str, text: str, section_id: int, project_id: int | None):
     """
     Update the title and text (alt text) of a media item.

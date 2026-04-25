@@ -10,7 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { LayoutDashboard, ImageIcon, Users, User, Globe, ChevronDown, Check, LogOut, FolderClosed } from "lucide-react"
+import { LayoutDashboard, ImageIcon, Users, User, Globe, ChevronDown, Check, LogOut, FolderClosed, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -148,9 +148,9 @@ export function Sidebar({ onClose }: SidebarProps) {
     ...(isAdmin
       ? [
           {
-            title: "Users",
-            icon: Users,
-            href: "/dashboard/users",
+            title: "Admin",
+            icon: ShieldCheck,
+            href: "/dashboard/admin",
           },
         ]
       : []),

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Literal
+from datetime import datetime
 
 # USER SCHEMAS
 class UserBase(BaseModel):
@@ -219,3 +220,47 @@ class MediaNoUploadedBy(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+# ADMIN SCHEMAS
+class AdminUserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    role: Optional[Literal['admin', 'editor', 'client']] = None
+
+
+class DomainUpdate(BaseModel):
+    name: Optional[str] = None
+    user_id: Optional[int] = None
+
+
+class DomainWithOwner(BaseModel):
+    id: int
+    name: str
+    user_id: int
+    owner_email: Optional[str] = None
+    owner_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# EMAIL SCHEMAS
+class EmailSend(BaseModel):
+    to_email: EmailStr
+    subject: str
+    body: str
+
+
+class EmailLogRead(BaseModel):
+    id: int
+    to_email: str
+    subject: str
+    body: str
+    sent_by: Optional[int] = None
+    status: str
+    error: Optional[str] = None
+    sent_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
