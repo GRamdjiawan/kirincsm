@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react"
 import { useDomain } from "@/context/DomainContext"
+import { API_URL } from "@/lib/config"
 
 interface FieldDefinition {
   id: number
@@ -72,7 +73,7 @@ export default function ProjectsPage() {
     const fetchProjects = async () => {
       setIsLoading(true)
       try {
-        const res = await fetch(`https://api.kirin-cms.nl/api/domains/${selectedDomain?.id}/projects`, {
+        const res = await fetch(`${API_URL}/api/domains/${selectedDomain?.id}/projects`, {
           method: "GET",
           credentials: "include",
         })
@@ -99,7 +100,7 @@ export default function ProjectsPage() {
   useEffect(() => {
     const fetchDefinitions = async () => {
       try {
-        const res = await fetch("https://api.kirin-cms.nl/api/project-field-definitions", {
+        const res = await fetch(`${API_URL}/api/project-field-definitions`, {
           method: "GET",
           credentials: "include",
         })
@@ -200,7 +201,7 @@ export default function ProjectsPage() {
       let projectId: number
 
       if (editProject) {
-        const res = await fetch(`https://api.kirin-cms.nl/api/projects/${editProject.id}`, {
+        const res = await fetch(`${API_URL}/api/projects/${editProject.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -209,7 +210,7 @@ export default function ProjectsPage() {
         if (!res.ok) throw new Error("Update failed")
         projectId = editProject.id
       } else {
-        const res = await fetch("https://api.kirin-cms.nl/api/projects/", {
+        const res = await fetch(`${API_URL}/api/projects/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -222,7 +223,7 @@ export default function ProjectsPage() {
 
       // Delete fields removed in the editor
       for (const fieldId of removedFieldIds) {
-        const deleteRes = await fetch(`https://api.kirin-cms.nl/api/project-fields/${fieldId}`, {
+        const deleteRes = await fetch(`${API_URL}/api/project-fields/${fieldId}`, {
           method: "DELETE",
           credentials: "include",
         })
@@ -246,7 +247,7 @@ export default function ProjectsPage() {
       for (const field of stagedFields) {
         if (field.id) {
           // Existing field — update
-          const fieldRes = await fetch(`https://api.kirin-cms.nl/api/project-fields/${field.id}`, {
+          const fieldRes = await fetch(`${API_URL}/api/project-fields/${field.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -255,7 +256,7 @@ export default function ProjectsPage() {
           if (!fieldRes.ok) throw new Error("Field update failed")
         } else {
           // New field — create
-          const fieldRes = await fetch(`https://api.kirin-cms.nl/api/project-fields`, {
+          const fieldRes = await fetch(`${API_URL}/api/project-fields`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -272,7 +273,7 @@ export default function ProjectsPage() {
       }
 
       // Refetch this project to get updated fields
-      const refreshed = await fetch(`https://api.kirin-cms.nl/api/projects/${projectId}`, {
+      const refreshed = await fetch(`${API_URL}/api/projects/${projectId}`, {
         credentials: "include",
       })
       if (refreshed.ok) {
@@ -298,7 +299,7 @@ export default function ProjectsPage() {
   // ── Delete ───────────────────────────────────────────────────────────────────
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`https://api.kirin-cms.nl/api/projects/${id}`, {
+      const res = await fetch(`${API_URL}/api/projects/${id}`, {
         method: "DELETE",
         credentials: "include",
       })

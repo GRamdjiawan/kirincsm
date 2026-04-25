@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Enum, Float
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Enum, Float, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from database import Base
 
 class User(Base):
@@ -98,7 +99,19 @@ class SEO(Base):
     __tablename__ = 'seo'
     id = Column(Integer, primary_key=True)
     domain_id = Column(Integer, ForeignKey('domains.id'), unique=True)
-    meta_title = Column(String(255))  # Updated field name
+    meta_title = Column(String(255))
     meta_description = Column(Text)
-    keywords = Column(Text)  # Updated field name
+    keywords = Column(Text)
     icon = Column(Text)
+
+
+class EmailLog(Base):
+    __tablename__ = 'email_logs'
+    id = Column(Integer, primary_key=True)
+    to_email = Column(String(255), nullable=False)
+    subject = Column(String(500), nullable=False)
+    body = Column(Text, nullable=False)
+    sent_by = Column(Integer, ForeignKey('users.id'), nullable=True)
+    status = Column(Enum('sent', 'failed'), default='sent', nullable=False)
+    error = Column(Text, nullable=True)
+    sent_at = Column(DateTime, server_default=func.now(), nullable=False)

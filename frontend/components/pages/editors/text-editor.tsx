@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useSectionContext } from "../section-context"
 import { useEffect, useState } from "react"
+import { API_URL } from "@/lib/config"
 
 export function TextEditor() {
   const { selectedSection } = useSectionContext()
@@ -13,7 +14,7 @@ export function TextEditor() {
   useEffect(() => {
     if (!selectedSection || selectedSection.type !== "TEXT") return
 
-    fetch(`https://api.kirin-cms.nl/api/media/${selectedSection.id}`, { credentials: "include" })
+    fetch(`${API_URL}/api/media/${selectedSection.id}`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => setMedia(Array.isArray(data) ? data : []))
       .catch((err) => {

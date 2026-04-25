@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react"
 import {
+import { API_URL } from "@/lib/config"
   type Section,
   type SectionType,
   type SectionContent,
@@ -104,7 +105,7 @@ export function SectionProvider({ children }: { children: React.ReactNode }) {
       setSections({})
       return
     }
-    fetch(`https://api.kirin-cms.nl/api/sections/${selectedPageId}`, { credentials: "include" })
+    fetch(`${API_URL}/api/sections/${selectedPageId}`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         setSections((prev) => ({

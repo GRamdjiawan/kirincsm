@@ -13,6 +13,38 @@ import os
 from fastapi.staticfiles import StaticFiles
 import io
 from PIL import Image
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+SMTP_HOST = os.getenv("SMTP_HOST", "localhost")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_PASS = os.getenv("SMTP_PASS", "")
+SMTP_FROM = os.getenv("SMTP_FROM", "noreply@kirin-cms.nl")
+SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
+
+
+def _send_smtp(to_email: str, subject: str, body: str):
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = SMTP_FROM
+    msg["To"] = to_email
+    msg.attach(MIMEText(body, "html" if "<" in body else "plain"))
+
+    if SMTP_PORT == 465:
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
+            if SMTP_USER and SMTP_PASS:
+                server.login(SMTP_USER, SMTP_PASS)
+            server.sendmail(SMTP_FROM, to_email, msg.as_string())
+    else:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            if SMTP_USE_TLS:
+                server.ehlo()
+                server.starttls()
+            if SMTP_USER and SMTP_PASS:
+                server.login(SMTP_USER, SMTP_PASS)
+            server.sendmail(SMTP_FROM, to_email, msg.as_string())
 
 app = FastAPI()
 UPLOAD_DIR = "./uploads"
@@ -628,38 +660,54 @@ async def upload_file(
         if domain.user_id != current_user.id:
             raise HTTPException(status_code=403, detail="You are not allowed to upload to this domain")
 
-    UPLOAD_DIR = "./uploads/" + str(current_user.id) + str(domain.name)
-    if not os.path.exists(UPLOAD_DIR):
-        os.makedirs(UPLOAD_DIR)
+    upload_dir = f"./uploads/{current_user.id}{domain.name}"
+    os.makedirs(upload_dir, exist_ok=True)
 
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as buffer:
-        buffer.write(contents)
-
-    # Calculate aspect ratio if the file is an image
     is_image = file.content_type.startswith("image/")
+    is_video = file.content_type.startswith("video/")
+    stem = os.path.splitext(file.filename)[0]
     aspect_ratio = None
+
     if is_image:
         try:
-            image = Image.open(io.BytesIO(contents))
-            width, height = image.size
+            img = Image.open(io.BytesIO(contents))
+            width, height = img.size
             aspect_ratio = round(height / width, 4)
+
+            # Normalise mode for WebP (handles palette, transparency, etc.)
+            if img.mode not in ("RGB", "RGBA"):
+                img = img.convert("RGBA" if img.mode in ("P", "LA") else "RGB")
+
+            webp_buf = io.BytesIO()
+            img.save(webp_buf, format="WEBP", quality=85, method=6)
+
+            save_filename = f"{stem}.webp"
+            with open(os.path.join(upload_dir, save_filename), "wb") as f:
+                f.write(webp_buf.getvalue())
         except Exception:
-            aspect_ratio = None
+            # Fallback: store original if conversion fails
+            save_filename = file.filename
+            with open(os.path.join(upload_dir, save_filename), "wb") as f:
+                f.write(contents)
+    else:
+        save_filename = file.filename
+        with open(os.path.join(upload_dir, save_filename), "wb") as f:
+            f.write(contents)
+
+    media_type = "image" if is_image else ("video" if is_video else "text")
 
     media_data = schemas.MediaCreate(
-        title=file.filename,
-        file_url=f"/uploads/{current_user.id}{domain.name}/{file.filename}",
-        type="image" if is_image else "text",
+        title=stem,
+        file_url=f"/uploads/{current_user.id}{domain.name}/{save_filename}",
+        type=media_type,
         domain_id=domain.id,
         uploaded_by=current_user.id,
         section_id=section_id,
         text="",
-        aspect_ratio=aspect_ratio  # Will be None for non-images
+        aspect_ratio=aspect_ratio,
     )
 
-    db_media = crud.create_media(db, media_data)
-    return db_media
+    return crud.create_media(db, media_data)
 
 @app.delete("/api/media/{media_id}", response_model=dict)
 def delete_media(
@@ -679,8 +727,8 @@ def delete_media(
     # Fetch the media item from the database
     media_item = crud.delete_media(db, media_id)
 
-    # Delete the file from the uploads directory
-    file_path = os.path.join(UPLOAD_DIR, os.path.basename(media_item.file_url))
+    # file_url is "/uploads/..." — prepend "." to get a relative path
+    file_path = "." + media_item.file_url
     if os.path.exists(file_path):
         os.remove(file_path)
 
@@ -713,6 +761,105 @@ def update_media(
     )
 
     return updated_media
+
+# -- ADMIN --
+def require_admin(current_user: models.User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+
+@app.get("/api/admin/users", response_model=List[schemas.UserRead])
+def admin_list_users(
+    email: str | None = None,
+    _: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return crud.get_users_filtered(db, email)
+
+
+@app.put("/api/admin/users/{user_id}", response_model=schemas.UserRead)
+def admin_update_user(
+    user_id: int,
+    data: schemas.AdminUserUpdate,
+    current_user: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot modify your own account here")
+    return crud.update_user_admin(db, user_id, data)
+
+
+@app.delete("/api/admin/users/{user_id}")
+def admin_delete_user(
+    user_id: int,
+    current_user: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    crud.delete_user(db, user_id)
+    return {"message": f"User {user_id} deleted"}
+
+
+@app.get("/api/admin/domains", response_model=List[schemas.DomainWithOwner])
+def admin_list_domains(
+    _: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return crud.get_domains_with_owners(db)
+
+
+@app.post("/api/admin/domains", response_model=schemas.DomainRead)
+def admin_create_domain(
+    data: schemas.DomainCreate,
+    _: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return crud.create_domain(db, data)
+
+
+@app.put("/api/admin/domains/{domain_id}", response_model=schemas.DomainRead)
+def admin_update_domain(
+    domain_id: int,
+    data: schemas.DomainUpdate,
+    _: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return crud.update_domain(db, domain_id, data)
+
+
+@app.delete("/api/admin/domains/{domain_id}")
+def admin_delete_domain(
+    domain_id: int,
+    _: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    crud.delete_domain(db, domain_id)
+    return {"message": f"Domain {domain_id} deleted"}
+
+
+@app.post("/api/admin/email/send", response_model=schemas.EmailLogRead)
+def admin_send_email(
+    payload: schemas.EmailSend,
+    current_user: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    try:
+        _send_smtp(payload.to_email, payload.subject, payload.body)
+        return crud.create_email_log(db, payload.to_email, payload.subject, payload.body, current_user.id, "sent")
+    except Exception as e:
+        log = crud.create_email_log(db, payload.to_email, payload.subject, payload.body, current_user.id, "failed", str(e))
+        raise HTTPException(status_code=502, detail=f"SMTP error: {e}")
+
+
+@app.get("/api/admin/email/logs", response_model=List[schemas.EmailLogRead])
+def admin_email_logs(
+    _: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return crud.get_email_logs(db)
+
 
 @app.get("/api/fill-gallery/{domain_id}", response_model=List[schemas.MediaNoUploadedBy])
 def fill_gallery(domain_id: str, db: Session = Depends(get_db)):

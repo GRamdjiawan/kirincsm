@@ -12,6 +12,7 @@ import { Camera, Key, Bell, Shield, Save, User, Globe, Link as LinkIcon } from "
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/context/AuthContext"
+import { API_URL } from "@/lib/config"
 
 interface Domain {
   id: number
@@ -68,7 +69,7 @@ export default function ProfilePage() {
     if (!user?.id) return
 
     setDomainsLoading(true)
-    fetch(`https://api.kirin-cms.nl/api/users/${user.id}/domains`, {
+    fetch(`${API_URL}/api/users/${user.id}/domains`, {
       method: "GET",
       credentials: "include",
     })
@@ -102,7 +103,7 @@ export default function ProfilePage() {
     setIsChangingPassword(true)
   
     try {
-      const response = await fetch("https://api.kirin-cms.nl/api/users/change-password", {
+      const response = await fetch(`${API_URL}/api/users/change-password`, {
         method: "PUT",
         credentials: "include",
         headers: {
@@ -125,7 +126,7 @@ export default function ProfilePage() {
 
         alert("Password changed successfully. You will be logged out.")
         try {
-          const response = await fetch("https://api.kirin-cms.nl/api/logout", {
+          const response = await fetch(`${API_URL}/api/logout`, {
             method: "POST",
             credentials: "include",
           })
@@ -176,7 +177,7 @@ export default function ProfilePage() {
     setIsLoading(true)
   
     try {
-      const response = await fetch("https://api.kirin-cms.nl/api/users/update", {
+      const response = await fetch(`${API_URL}/api/users/update`, {
         method: "PUT",
         credentials: "include",
         headers: {

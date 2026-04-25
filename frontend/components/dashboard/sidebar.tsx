@@ -10,13 +10,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { LayoutDashboard, ImageIcon, Users, User, Globe, ChevronDown, Check, LogOut, FolderClosed } from "lucide-react"
+import { LayoutDashboard, ImageIcon, Users, User, Globe, ChevronDown, Check, LogOut, FolderClosed, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { useDomain } from "../../context/DomainContext"
 import { LoadingScreen } from "@/components/ui/LoadingScreen"
+import { API_URL } from "@/lib/config"
 
 interface Domain {
   id: number
@@ -41,7 +42,7 @@ export function Sidebar({ onClose }: SidebarProps) {
     if (!user?.id) return
 
     if (isAdmin) {
-      fetch("https://api.kirin-cms.nl/api/domains", {
+      fetch(`${API_URL}/api/domains`, {
         method: "GET",
         credentials: "include",
       })
@@ -61,7 +62,7 @@ export function Sidebar({ onClose }: SidebarProps) {
           setDomains([])
         })
     } else {
-      fetch(`https://api.kirin-cms.nl/api/users/${user.id}/domains`, {
+      fetch(`${API_URL}/api/users/${user.id}/domains`, {
         method: "GET",
         credentials: "include",
       })
@@ -90,7 +91,7 @@ export function Sidebar({ onClose }: SidebarProps) {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("https://api.kirin-cms.nl/api/logout", {
+      const response = await fetch(`${API_URL}/api/logout`, {
         method: "POST",
         credentials: "include",
       })
@@ -147,9 +148,9 @@ export function Sidebar({ onClose }: SidebarProps) {
     ...(isAdmin
       ? [
           {
-            title: "Users",
-            icon: Users,
-            href: "/dashboard/users",
+            title: "Admin",
+            icon: ShieldCheck,
+            href: "/dashboard/admin",
           },
         ]
       : []),

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { FileText } from "lucide-react"
+import { API_URL } from "@/lib/config"
 
 type Page = {
   id: string
@@ -17,7 +18,7 @@ export function PagesList() {
   const [pages, setPages] = useState<Page[]>([])
 
   useEffect(() => {
-    fetch("https://api.kirin-cms.nl/api/pages", { credentials: "include" })
+    fetch(`${API_URL}/api/pages`, { credentials: "include" })
       .then(res => res.json())
       .then(data => setPages(data))
   }, [])

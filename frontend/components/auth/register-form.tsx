@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { LoadingScreen } from "@/components/ui/LoadingScreen"
 import { useAuth } from "@/context/AuthContext" // Import the AuthContext
+import { API_URL } from "@/lib/config"
 
 const registerSchema = z
   .object({
@@ -55,7 +56,7 @@ export function RegisterForm() {
     setIsLoading(true)
 
     try {
-      const res = await fetch("https://api.kirin-cms.nl/api/register", {
+      const res = await fetch(`${API_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -69,7 +70,7 @@ export function RegisterForm() {
 
       if (res.ok) {
         // ✅ Automatically log in user by fetching user details
-        const meRes = await fetch("https://api.kirin-cms.nl/api/me", {
+        const meRes = await fetch(`${API_URL}/api/me`, {
           method: "GET",
           credentials: "include",
         })
