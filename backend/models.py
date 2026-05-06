@@ -56,7 +56,7 @@ class Media(Base):
     title = Column(String(255), nullable=False)  # Made title required
     section = relationship("Section", back_populates="media_items")
     domain = relationship("Domain", back_populates="media_items")
-    project = relationship("Project", back_populates="media_items")
+    project = relationship("Project", back_populates="media_items", foreign_keys=[project_id])
 
 
 class Project(Base):
@@ -65,9 +65,11 @@ class Project(Base):
     domain_id = Column(Integer, ForeignKey('domains.id'), nullable=False)
     title = Column(String(255), nullable=False)
     description = Column(Text)
+    thumbnail_id = Column(Integer, ForeignKey('media.id'), nullable=True)
 
     domain = relationship("Domain", back_populates="projects")
-    media_items = relationship("Media", back_populates="project")
+    media_items = relationship("Media", back_populates="project", foreign_keys="Media.project_id")
+    thumbnail = relationship("Media", foreign_keys="Project.thumbnail_id")
     fields = relationship("ProjectField", back_populates="project", cascade="all, delete-orphan")
 
 

@@ -90,6 +90,7 @@ class ProjectBase(BaseModel):
     domain_id: int
     title: str
     description: Optional[str] = None
+    thumbnail_id: Optional[int] = None
 
 
 class ProjectCreate(ProjectBase):
@@ -99,6 +100,7 @@ class ProjectCreate(ProjectBase):
 class ProjectUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    thumbnail_id: Optional[int] = None
 
 
 class ProjectFieldDefinitionBase(BaseModel):
@@ -141,6 +143,7 @@ class ProjectFieldRead(ProjectFieldBase):
 class ProjectRead(ProjectBase):
     id: int
     fields: List[ProjectFieldRead] = []
+    media_items: List['MediaRead'] = []
 
     class Config:
         from_attributes = True
