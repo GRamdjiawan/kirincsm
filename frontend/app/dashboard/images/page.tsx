@@ -730,7 +730,7 @@ export default function ImagesPage() {
                       {selectedItem.type === "image" ? (
                         <div className="relative w-full h-full">
                           <Image
-                            src={`${API_URL}/${selectedItem.file_url}`}
+                            src={`${API_URL}${selectedItem.file_url}`}
                             alt={selectedItem.text || selectedItem.title || selectedItem.file_url}
                             fill
                             className="object-contain"
