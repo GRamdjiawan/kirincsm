@@ -53,11 +53,17 @@ UPLOAD_DIR = "./uploads"
 # Create tables in the database
 models.Base.metadata.create_all(bind=database.engine)
 
+#add "http://localhost:3000", for local development testing, remove in production
 origins = [
-    "http://localhost:3000",  # Replace with the URL of your Next.js frontend
+    
     "https://www.kirin-cms.nl",
     "https://kirin-cms.nl",
-    "https://api.kirin-cms.nl",
+    "https://www.gkr-productions.nl",
+    "https://gkr-productions.nl",
+    "https://www.bakx-vastgoedonderhoud.nl",
+    "https://bakx-vastgoedonderhoud.nl",
+    "https://www.gianni-ramdjiawan.com",
+    "https://gianni-ramdjiawan.com",
 ]
 
 app.add_middleware(
