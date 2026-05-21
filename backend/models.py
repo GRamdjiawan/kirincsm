@@ -51,7 +51,7 @@ class Media(Base):
     uploaded_by = Column(Integer, ForeignKey('users.id'))
     section_id = Column(Integer, ForeignKey('sections.id'))
     project_id = Column(Integer, ForeignKey('projects.id'), nullable=True)
-    type = Column(Enum('image', 'text'), default='image')
+    type = Column(Enum('image', 'text', 'video', 'youtube'), default='image')
     aspect_ratio = Column(Float, nullable=True)  # Added aspect_ratio field
     title = Column(String(255), nullable=False)  # Made title required
     section = relationship("Section", back_populates="media_items")

@@ -637,7 +637,7 @@ async def upload_file(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    MAX_FILE_SIZE_MB = 20
+    MAX_FILE_SIZE_MB = 500
     contents = await file.read()
 
     if len(contents) > MAX_FILE_SIZE_MB * 1024 * 1024:
@@ -707,6 +707,39 @@ async def upload_file(
         aspect_ratio=aspect_ratio,
     )
 
+    return crud.create_media(db, media_data)
+
+@app.post("/api/media/youtube", response_model=schemas.MediaRead)
+def add_youtube_link(
+    payload: schemas.YoutubeCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    import re
+    domain = crud.get_domain(db, payload.domain_id)
+    if not domain or domain.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Domain not found or access denied")
+
+    # Extract YouTube video ID
+    pattern = r"(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)"
+    match = re.search(pattern, payload.url)
+    if not match:
+        raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+
+    video_id = match.group(1)
+    clean_url = f"https://www.youtube.com/watch?v={video_id}"
+    title = payload.title or video_id
+
+    media_data = schemas.MediaCreate(
+        title=title,
+        file_url=clean_url,
+        type="youtube",
+        domain_id=payload.domain_id,
+        uploaded_by=current_user.id,
+        project_id=payload.project_id,
+        text="",
+        aspect_ratio=None,
+    )
     return crud.create_media(db, media_data)
 
 @app.delete("/api/media/{media_id}", response_model=dict)

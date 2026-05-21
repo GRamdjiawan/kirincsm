@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -34,12 +34,36 @@ interface MediaItem {
   id: number
   title: string
   file_url: string
-  type: "image" | "video" | "text"
+  type: "image" | "video" | "text" | "youtube"
   domain_id: number
   uploaded_by: number
   project_id?: number | null
   section_id?: number | null
   text?: string | null
+}
+
+function getYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)
+  return match ? match[1] : null
+}
+
+function VideoThumbnail({ src, className }: { src: string; className?: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      className={className}
+      muted
+      playsInline
+      preload="metadata"
+      onLoadedMetadata={(e) => {
+        const v = e.currentTarget
+        v.currentTime = 0.5
+      }}
+    />
+  )
 }
 
 interface ProjectOption {
@@ -52,7 +76,7 @@ export default function ImagesPage() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
   const [filteredItems, setFilteredItems] = useState<MediaItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [filterType, setFilterType] = useState<"all" | "image" | "video">("all")
+  const [filterType, setFilterType] = useState<"all" | "image" | "video" | "youtube">("all")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null)
   const [showUpload, setShowUpload] = useState(false)
@@ -368,7 +392,7 @@ export default function ImagesPage() {
                 <ImageUpload
                   onUploadComplete={handleUploadComplete}
                   maxFiles={10}
-                  maxFileSize={30 * 1024 * 1024}
+                  maxFileSize={500 * 1024 * 1024}
                   domainId={selectedDomain?.id}
                 />
               </div>
@@ -431,6 +455,15 @@ export default function ImagesPage() {
               >
                 <FileVideo className="h-3 w-3 mr-1" />
                 Videos ({mediaItems.filter((item) => item.type === "video").length})
+              </Button>
+              <Button
+                variant={filterType === "youtube" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterType("youtube")}
+                className="rounded-xl text-xs"
+              >
+                <span className="mr-1 text-red-400">▶</span>
+                YouTube ({mediaItems.filter((item) => item.type === "youtube").length})
               </Button>
             </div>
 
@@ -521,6 +554,18 @@ export default function ImagesPage() {
                       <FileVideo className="h-3 w-3 mr-1" />
                       Videos
                     </Button>
+                    <Button
+                      variant={filterType === "youtube" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setFilterType("youtube")
+                        setShowMobileFilters(false)
+                      }}
+                      className="rounded-xl text-xs"
+                    >
+                      <span className="mr-1 text-red-400">▶</span>
+                      YouTube
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -559,9 +604,34 @@ export default function ImagesPage() {
                               className="object-cover transition-transform duration-300 group-hover:scale-110"
                               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                             />
+                          ) : item.type === "youtube" ? (
+                            <>
+                              <img
+                                src={`https://img.youtube.com/vi/${getYouTubeId(item.file_url)}/mqdefault.jpg`}
+                                alt={item.title}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-8 h-8 rounded-full bg-red-600/90 flex items-center justify-center shadow-md">
+                                  <div className="w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[9px] border-l-white ml-0.5" />
+                                </div>
+                              </div>
+                            </>
+                          ) : item.type === "video" ? (
+                            <>
+                              <VideoThumbnail
+                                src={`${API_URL}${item.file_url}`}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center">
+                                  <div className="w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[9px] border-l-white ml-0.5" />
+                                </div>
+                              </div>
+                            </>
                           ) : (
-                            <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                              <FileVideo className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400" />
+                            <div className="w-full h-full bg-gray-800/80 flex items-center justify-center">
+                              <FileVideo className="h-8 w-8 sm:h-12 sm:w-12 text-gray-500" />
                             </div>
                           )}
 
@@ -636,13 +706,31 @@ export default function ImagesPage() {
                               )}
                             </div>
                           )}
-                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0">
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0 relative">
                             {item.type === "image" ? (
                               <Image
                                 src={`${API_URL}${item.file_url}`}
                                 alt={item.text || item.title || item.file_url}
                                 width={64}
                                 height={64}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : item.type === "youtube" ? (
+                              <>
+                                <img
+                                  src={`https://img.youtube.com/vi/${getYouTubeId(item.file_url)}/mqdefault.jpg`}
+                                  alt={item.title}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                  <div className="w-5 h-5 rounded-full bg-red-600 flex items-center justify-center">
+                                    <div className="w-0 h-0 border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent border-l-[7px] border-l-white ml-0.5" />
+                                  </div>
+                                </div>
+                              </>
+                            ) : item.type === "video" ? (
+                              <VideoThumbnail
+                                src={`${API_URL}${item.file_url}`}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
@@ -737,6 +825,22 @@ export default function ImagesPage() {
                             sizes="(max-width: 1024px) 100vw, 60vw"
                           />
                         </div>
+                      ) : selectedItem.type === "youtube" ? (
+                        <div className="w-full h-full">
+                          <iframe
+                            src={`https://www.youtube-nocookie.com/embed/${getYouTubeId(selectedItem.file_url)}`}
+                            title={selectedItem.title}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            className="w-full h-full rounded-xl border-0"
+                          />
+                        </div>
+                      ) : selectedItem.type === "video" ? (
+                        <video
+                          src={`${API_URL}${selectedItem.file_url}`}
+                          controls
+                          className="w-full h-full rounded-xl object-contain"
+                        />
                       ) : (
                         <div className="flex items-center justify-center">
                           <FileVideo className="h-16 w-16 sm:h-24 sm:w-24 text-gray-400" />
