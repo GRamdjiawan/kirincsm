@@ -182,7 +182,7 @@ class MediaBase(BaseModel):
     title: str  # Made required to match database
     file_url: Optional[str]
     text: Optional[str]
-    type: Literal['image', 'text']
+    type: Literal['image', 'text', 'video', 'youtube']
     aspect_ratio: float | None = None  # h/w ratio, None for non-images
     
 class MediaCreate(BaseModel):
@@ -210,6 +210,12 @@ class MediaUpdate(BaseModel):
     title: Optional[str] = None
     text: Optional[str] = None
     section_id: Optional[int] = None
+    project_id: Optional[int] = None
+
+class YoutubeCreate(BaseModel):
+    url: str
+    title: Optional[str] = None
+    domain_id: int
     project_id: Optional[int] = None
 
 class MediaNoUploadedBy(BaseModel):
